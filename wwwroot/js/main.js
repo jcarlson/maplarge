@@ -5,10 +5,13 @@
  */
 import { ApiClient } from "./api-client.js";
 import { App } from "./app.js";
+import { ListingView } from "./listing-view.js";
 import { parseState } from "./url-state.js";
 
 // fetch must be called on the window; passed bare, the client would call it on itself.
-const app = new App(new ApiClient(fetch.bind(globalThis)));
+const api = new ApiClient(fetch.bind(globalThis));
+const view = new ListingView(document.getElementById("listing"));
+const app = new App(api, view);
 
 const navigateToHash = () => app.navigate(parseState(location.hash));
 addEventListener("hashchange", navigateToHash);

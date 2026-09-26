@@ -88,16 +88,21 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
 - `Controllers/SearchController.cs` — `GET /api/search?q=` finds files and folders anywhere under the base
   whose name contains `q` (case-insensitive) via `FileSystemService.Search`, returned as a JSON `Listing`
   (400 if `q` is missing or blank).
-- `wwwroot/index.html` — the SPA's page, launched by default (`launchUrl: index.html`). Still the
-  placeholder body; its only real content is the `<script type="module" src="js/main.js">` tag in the
-  head (module scripts are deferred, so it runs after the DOM is parsed).
+- `wwwroot/index.html` — the SPA's page, launched by default (`launchUrl: index.html`): the
+  `<script type="module" src="js/main.js">` tag in the head (module scripts are deferred, so it runs
+  after the DOM is parsed) and the `<main id="listing">` container the view renders into.
 - `wwwroot/js/main.js` — the entry point and the only module that reads the browser's location: it
-  constructs the `App` with an `ApiClient` over the window's `fetch`, and parses `location.hash` with
-  `parseState` into a `navigate` call, once on load and on every `hashchange`. Deliberately thin and
-  untested, per decision 14.
-- `wwwroot/js/app.js` — the `App` class, the root of the SPA, constructed with an `ApiClient`.
-  `navigate(urlState)` loads the `Listing` for the state's `pwd` (the server accepts the leading slash)
-  and keeps it as `listing`. The URL state itself is not stored: the hash is its source of truth. The entry-point module owns
+  builds the `ApiClient` over the window's `fetch` and the `ListingView` over the container, constructs
+  the `App` with both, and parses `location.hash` with `parseState` into a `navigate` call, once on load
+  and on every `hashchange`. Deliberately thin and untested, per decision 14.
+- `wwwroot/js/app.js` — the `App` class, the root of the SPA, constructed with an `ApiClient` and a
+  view. `navigate(urlState)` loads the `Listing` for the state's `pwd` (the server accepts the leading
+  slash) and passes it to the view's `showListing`. It touches neither the location nor the DOM and
+  stores nothing: the hash is the source of truth for state. Tested with fakes for both dependencies.
+- `wwwroot/js/listing-view.js` — `ListingView`, the DOM side: constructed with a container element,
+  `showListing(listing)` replaces its contents with one element per entry, via `createElement` and
+  `textContent` (never `innerHTML`). It decides nothing itself, so it stays thin and untested on Node;
+  anything that needs a decision (formatting, links, counts) belongs in a pure, tested module. The entry-point module owns
   `location.hash` and calls it on each change. Tests in `TestProject.Tests/js/app.test.js` use a fake
   client.
 - `wwwroot/js/api-client.js` — `ApiClient`, the browser's view of the JSON API, with `fetch` injected

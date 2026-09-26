@@ -19,26 +19,43 @@ function fakeApi() {
     };
 }
 
-test("a new App has no listing until it navigates", () => {
-    assert.equal(new App(fakeApi()).listing, undefined);
-});
+/** A stand-in for ListingView that records the listings it was asked to show. */
+function fakeView() {
+    const shown = [];
+    return {
+        shown,
+        showListing(listing) {
+            shown.push(listing);
+        },
+    };
+}
 
 test("navigate lists the directory the URL state points at", async () => {
     const api = fakeApi();
-    const app = new App(api);
+    const app = new App(api, fakeView());
 
     await app.navigate({ pwd: "/photos", query: {} });
 
     assert.deepEqual(api.calls, ["/photos"]);
-    assert.deepEqual(app.listing, listing);
 });
 
-test("each navigation lists its own directory", async () => {
+test("navigate shows the listing it loaded", async () => {
+    const view = fakeView();
+    const app = new App(fakeApi(), view);
+
+    await app.navigate({ pwd: "/photos", query: {} });
+
+    assert.deepEqual(view.shown, [listing]);
+});
+
+test("each navigation lists and shows its own directory", async () => {
     const api = fakeApi();
-    const app = new App(api);
+    const view = fakeView();
+    const app = new App(api, view);
 
     await app.navigate({ pwd: "/photos", query: {} });
     await app.navigate({ pwd: "/", query: {} });
 
     assert.deepEqual(api.calls, ["/photos", "/"]);
+    assert.equal(view.shown.length, 2);
 });
