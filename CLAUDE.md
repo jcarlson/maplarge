@@ -73,9 +73,9 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
 
 ## Structure
 
-- `Program.cs` — minimal host: `AddControllers()`, `UseStaticFiles()`, `MapControllers()`. HTTP only; see
-  `DECISIONS.md`. Static files are served from `wwwroot/`, so the SPA is just `wwwroot/index.html` plus
-  whatever JS/TS is added alongside it.
+- `Program.cs` — minimal host: `AddControllers()`, `UseDefaultFiles()`, `UseStaticFiles()`,
+  `MapControllers()`. HTTP only; see `DECISIONS.md`. Static files are served from `wwwroot/`, and `/`
+  serves `wwwroot/index.html`, the SPA.
 - `Controllers/DirectoryController.cs` — the JSON API, routed under `/api/dir`. `GET /api/dir?path=` lists a
   directory via `FileSystemService` as a JSON array of `FileSystemEntry` (400 if the path escapes the
   base, 404 if it does not exist).
@@ -89,7 +89,7 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   directory `path` (the whole base when omitted) whose name contains `q` (case-insensitive) via
   `FileSystemService.Search`, returned as a JSON array of `FileSystemEntry` with base-relative paths (400
   if `q` is missing or blank or `path` escapes the base, 404 if the directory is missing).
-- `wwwroot/index.html` — the SPA's page, launched by default (`launchUrl: index.html`): the
+- `wwwroot/index.html` — the SPA's page, served at `/`: the
   `<script type="module" src="js/main.js">` tag in the head (module scripts are deferred, so it runs
   after the DOM is parsed), the `<form id="search">` with its `q` input, submit button and clear link,
   the `<form id="upload">` with its required `file` input, submit button and `status` output, and the
@@ -189,7 +189,7 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
 - `appsettings.json` — the single config file. `FileBrowser:BaseDirectory` is the browsable root (relative
   values resolve against the content root); override with the `FileBrowser__BaseDirectory` environment
   variable.
-- `Properties/launchSettings.json` — one `TestProject` profile, HTTP only.
+- `Properties/launchSettings.json` — one `TestProject` profile, HTTP only, opening the browser at `/`.
 - `DECISIONS.md` — numbered log of architecture decisions with rationale. **Append an entry whenever a
   non-obvious design choice is made** (scope cuts, API shape, data model, performance trade-offs). Reviewers
   read it alongside the Git history.

@@ -18,6 +18,8 @@ namespace TestProject {
 
             // Configure the HTTP request pipeline.
 
+            // "/" serves wwwroot/index.html, the SPA; everything else under wwwroot is served as is.
+            app.UseDefaultFiles();
             app.UseStaticFiles();
 
             app.MapControllers();
