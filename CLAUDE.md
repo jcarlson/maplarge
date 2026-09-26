@@ -92,11 +92,13 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   placeholder body; its only real content is the `<script type="module" src="js/main.js">` tag in the
   head (module scripts are deferred, so it runs after the DOM is parsed).
 - `wwwroot/js/main.js` — the entry point and the only module that reads the browser's location: it
-  constructs the `App`, parses `location.hash` with `parseState`, and calls `navigate`. Deliberately
-  thin and untested, per decision 14.
-- `wwwroot/js/app.js` — the `App` class, the root of the SPA. It holds the current `State` and
-  `navigate(state)` makes a parsed state current; the entry-point module will own `location.hash` and
-  call it on each change. Its tests are in `TestProject.Tests/js/app.test.js`.
+  constructs the `App` with an `ApiClient` over the window's `fetch`, parses `location.hash` with
+  `parseState`, and calls `navigate`. Deliberately thin and untested, per decision 14.
+- `wwwroot/js/app.js` — the `App` class, the root of the SPA, constructed with an `ApiClient`. It holds
+  the current `State` and its `Listing`; `navigate(state)` makes a parsed state current and loads the
+  listing for its `pwd` (the server accepts the leading slash). The entry-point module owns
+  `location.hash` and calls it on each change. Tests in `TestProject.Tests/js/app.test.js` use a fake
+  client.
 - `wwwroot/js/api-client.js` — `ApiClient`, the browser's view of the JSON API, with `fetch` injected
   through the constructor so tests pass a fake. `listDirectory(path)` calls `GET /api/dir` and resolves
   to the `Listing`; a non-2xx status rejects with an `ApiError` carrying the HTTP status. The JSDoc
