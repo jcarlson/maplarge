@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A take-home coding exercise (see `REQUIREMENTS.pdf`, extract with `pdftotext -layout REQUIREMENTS.pdf -`). The
+A take-home coding exercise (see `REQUIREMENTS.md`). The
 starting point is a near-empty ASP.NET Core 8 web project (`TestProject`) with one stub controller and a
 "Hello World" `wwwroot/index.html`. The deliverable is a **file & directory browser**: a JSON Web API plus a
 single-page app, both written from scratch. The reviewers evaluate original code and architecture in a code
