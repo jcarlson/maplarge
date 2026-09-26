@@ -187,8 +187,12 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   `DefaultItemExcludes` in `TestProject.csproj`. Its `js/` folder holds the Node tests for `wwwroot/js`,
   kept here rather than under `wwwroot` so they are never served as static files.
 - `appsettings.json` — the single config file. `FileBrowser:BaseDirectory` is the browsable root (relative
-  values resolve against the content root); override with the `FileBrowser__BaseDirectory` environment
-  variable.
+  values resolve against the content root), `public` by default; override with the
+  `FileBrowser__BaseDirectory` environment variable.
+- `public/` — the default base directory, seeded with sample files to browse, search and download: a
+  README, notes, a CSV, an SVG and a PNG, and the original requirements PDF. Uploads land here too, so
+  `.gitignore` ignores everything under it except the seed files (each subdirectory has to be
+  un-ignored before a file inside it can be).
 - `Properties/launchSettings.json` — one `TestProject` profile, HTTP only, opening the browser at `/`.
 - `DECISIONS.md` — numbered log of architecture decisions with rationale. **Append an entry whenever a
   non-obvious design choice is made** (scope cuts, API shape, data model, performance trade-offs). Reviewers

@@ -30,3 +30,18 @@ node_modules/
 appsettings.*.local.json
 .env
 .env.*
+
+# Sample base directory (see CLAUDE.md): uploads land here, so only the seed files are tracked.
+# A directory must be un-ignored before a file inside it can be.
+public/**
+!public/.gitkeep
+!public/README.txt
+!public/requirements.pdf
+!public/notes/
+!public/notes/todo.txt
+!public/notes/meeting-2026-09.md
+!public/data/
+!public/data/cities.csv
+!public/images/
+!public/images/logo.svg
+!public/images/gradient.png
