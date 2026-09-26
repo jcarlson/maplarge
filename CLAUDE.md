@@ -112,8 +112,9 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   `location.hash` and calls it on each change. Tests in `TestProject.Tests/js/app.test.js` use a fake
   client.
 - `wwwroot/js/api-client.js` — `ApiClient`, the browser's view of the JSON API, with `fetch` injected
-  through the constructor so tests pass a fake. `listDirectory(path)` calls `GET /api/dir` and resolves
-  to the `Entry[]`; a non-2xx status rejects with an `ApiError` carrying the HTTP status. The module
+  through the constructor so tests pass a fake. `listDirectory(path)` calls `GET /api/dir` and
+  `search(path, query)` calls `GET /api/search`; both resolve to the `Entry[]`, and a non-2xx status
+  rejects with an `ApiError` carrying the HTTP status (shared by a private `_getJson`). The module
   also exports `fileUrl(path)`, the `GET /api/file` link for a download (followed by the browser, not
   fetched). The JSDoc typedef for `Entry` (the client's name for the server's `FileSystemEntry`) lives
   here too.

@@ -45,7 +45,27 @@ export class ApiClient {
      * @throws {ApiError} 400 if the path escapes the base, 404 if the directory does not exist.
      */
     async listDirectory(path) {
-        const url = "/api/dir?" + new URLSearchParams({ path });
+        return this._getJson("/api/dir?" + new URLSearchParams({ path }));
+    }
+
+    /**
+     * Finds the entries anywhere under `path` whose name contains `query`, ignoring
+     * case, in the same order as a listing. Paths in the result are relative to the
+     * base, not to `path`.
+     * @param {string} path Directory path relative to the base; empty for the whole base.
+     * @param {string} query The text to look for in entry names.
+     * @returns {Promise<Entry[]>}
+     * @throws {ApiError} 400 if the query is blank or the path escapes the base, 404 if the directory does not exist.
+     */
+    async search(path, query) {
+        return this._getJson("/api/search?" + new URLSearchParams({ path, q: query }));
+    }
+
+    /**
+     * GETs `url` and parses the JSON body, or throws an `ApiError` for a non-2xx status.
+     * @param {string} url
+     */
+    async _getJson(url) {
         const response = await this._fetch(url);
         if (!response.ok) {
             throw new ApiError(response.status, url);

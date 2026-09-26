@@ -57,6 +57,31 @@ test("listDirectory throws an ApiError carrying the status for a non-OK response
     );
 });
 
+test("search requests /api/search with the path and query as parameters", async () => {
+    const { fetch, calls } = fakeFetch(200, entries);
+
+    await new ApiClient(fetch).search("photos/2024 summer", "cat & dog");
+
+    assert.deepEqual(calls, ["/api/search?path=photos%2F2024+summer&q=cat+%26+dog"]);
+});
+
+test("search returns the entries the server sent", async () => {
+    const { fetch } = fakeFetch(200, entries);
+
+    const result = await new ApiClient(fetch).search("", "cat");
+
+    assert.deepEqual(result, entries);
+});
+
+test("search throws an ApiError carrying the status for a non-OK response", async () => {
+    const { fetch } = fakeFetch(400);
+
+    await assert.rejects(
+        () => new ApiClient(fetch).search("", ""),
+        (error) => error instanceof ApiError && error.status === 400,
+    );
+});
+
 test("fileUrl points at GET /api/file with the path as a query parameter", () => {
     assert.equal(fileUrl("photos/2024 summer/cat.jpg"), "/api/file?path=photos%2F2024+summer%2Fcat.jpg");
 });
