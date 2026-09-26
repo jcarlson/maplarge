@@ -72,6 +72,9 @@ Unit tests (xUnit) live in `TestProject.Tests/`. Run them with `dotnet test`, or
 - `Program.cs` — minimal host: `AddControllers()`, `UseStaticFiles()`, `MapControllers()`. HTTP only; see
   `DECISIONS.md`. Static files are served from `wwwroot/`, so the SPA is just `wwwroot/index.html` plus
   whatever JS/TS is added alongside it.
+- `Controllers/DirectoryController.cs` — the JSON API, routed under `/api/dir`. `GET /api/dir?path=` lists a
+  directory via `DirectoryLister` as a JSON array of base-relative paths (400 if the path escapes the base,
+  404 if it does not exist).
 - `Controllers/TestController.cs` — placeholder API controller (`GET /Test` returns a string). Attribute-routed
   via `[Route("[controller]")]`. Replace or delete it; it exists only as a starting point.
 - `wwwroot/index.html` — placeholder page, launched by default (`launchUrl: index.html`).

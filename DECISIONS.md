@@ -70,3 +70,20 @@ adds a second rule to maintain, and any further special segment someone might wo
 letter on Windows) is either not expanded by .NET at all or is caught by the same containment check. The
 trade-off is that inputs like `foo/../bar` are accepted and normalised to `bar` rather than rejected, which
 is harmless because they cannot reach anything outside the base.
+
+## 7. Listing endpoint returns a bare JSON array; the controller maps the lister's exceptions to status codes
+
+**Decision:** `GET /api/dir?path=<relative path>` returns the entries from `DirectoryLister.List` directly,
+serialised as a JSON array of strings such as `["notes.txt","photos"]`, with no wrapping object. The
+controller catches the two exceptions the lister documents and maps `ArgumentException` (path escapes
+the base) to 400 and `DirectoryNotFoundException` to 404; nothing else is caught, so unexpected failures
+still surface as 500s. API routes live under `/api` so they cannot collide with static files served from
+`wwwroot`.
+
+**Why:** The lister already produces exactly what the client needs, so wrapping it would add a shape to
+maintain for no information gain; if a listing later needs metadata (counts, sizes), the response can grow
+into an object at that point. Mapping exceptions inside the one action rather than in a global exception
+filter keeps the mapping next to the code that knows what those exceptions mean; a filter becomes worth
+having once several endpoints share the same mapping. Because the controller holds no logic of its own,
+its tests call the action directly against a `DirectoryLister` over a temp directory, which checks the
+status-code mapping without hosting the app.
