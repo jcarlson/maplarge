@@ -30,6 +30,14 @@ Guidance from the PDF that shapes how to work here:
 - Prefer substantial original C# and JavaScript over framework/template usage.
 - Styling is unimportant; functionality and code quality are what get reviewed.
 
+## Working step by step
+
+**Do not implement features or functionality ahead of being asked.** The requirements are all visible, but the
+work proceeds one deliberate step at a time so each design decision can be discussed. Build exactly what the
+current request covers, no more. If a natural next step exists, mention it in a sentence rather than building it.
+This applies to helper methods, factories, extra properties and "while I'm here" additions as much as to whole
+features.
+
 ## Commands
 
 The project targets `net8.0`; the installed SDK is .NET 10, which builds it fine.

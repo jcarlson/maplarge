@@ -23,3 +23,12 @@ minimal and avoids the certificate-trust prompts and redirect warnings that come
 Development file duplicated `appsettings.json` exactly. The launch profile still sets
 `ASPNETCORE_ENVIRONMENT=Development` so ASP.NET Core's developer exception page stays on, which is useful
 while iterating.
+
+## 3. Symbolic links and other special files are out of scope
+
+**Decision:** Only regular files and directories are modeled. Symbolic links, devices, sockets and pipes
+are excluded, and will be omitted from listings rather than reported or followed.
+
+**Why:** Following links would let a link inside the root point anywhere on disk. Reporting them as a
+distinct entry type is a reasonable feature but not needed for the exercise; hiding them is the simplest
+safe behavior and can be revisited if time allows.
