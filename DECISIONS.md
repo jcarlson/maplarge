@@ -222,3 +222,34 @@ never what a search box means. Scoping a search to a subdirectory is a natural n
 `path` parameter resolved through `PathResolver`; it is left out until the UI needs it. Consistent with
 decision 3, symbolic links are neither detected nor special-cased, so a directory link that forms a cycle
 would be followed by the recursion; handling that belongs with the wider link decision, not here.
+
+## 14. The SPA is plain JavaScript ES modules with no build step; its unit tests run on Node's built-in runner
+
+**Decision:** The browser side is written in plain JavaScript as native ES modules under `wwwroot/js`,
+loaded by a single `<script type="module">` in `index.html` and served exactly as written by the static
+file middleware. There is no TypeScript, no bundler and no transpile step, so nothing runs between
+`dotnet build` and the files a browser receives. Types at module boundaries (the API's `Listing` and
+`Entry` shapes, the URL state object, and similar) are documented with JSDoc annotations so editors can
+check them. Logic such as URL-state parsing, path handling, size formatting, sorting and the API client is
+kept in modules that never touch the DOM, and those modules are unit-tested with Node's built-in test
+runner (`node --test` with `node:assert`), which needs no npm packages. Node is therefore a tool for
+running the JavaScript tests only; building and running the app requires nothing beyond the .NET SDK.
+
+**Why:** The requirements allow vanilla JavaScript or TypeScript, and a browser cannot run TypeScript, so
+choosing it always means adding a compile step. The options were weighed: the official
+`Microsoft.TypeScript.MSBuild` package (7.x) bundles a native compiler and runs inside `dotnet build`
+with no Node dependency, but it is brand new, needs a workaround before type errors fail the build, and
+turns the served JavaScript into a build artefact; an npm-driven pipeline (tsc or esbuild via an MSBuild
+`Exec` target) would put Node on every reviewer's build path, which the "must build with the SDK"
+requirement argues against; JSDoc gives most of the editor-level type checking with none of that. Plain
+modules keep the source, the served files and the Git diffs identical, so reviewers read exactly the code
+that runs, and the "minimal boilerplate" guidance is honoured: no `tsconfig.json`, no compiler properties
+in the csproj, no ignored output directory. At the size this project reaches (a handful of small
+modules), that trade is clearly in favour of plain JavaScript; if the client grows beyond it, renaming
+`.js` to `.ts` on already-annotated code is a mechanical change, so the decision is cheap to reverse. For
+tests, the built-in runner was chosen over Vitest (a large dependency tree for what is needed here), Jest
+(still awkward with ES modules) and browser-driven end-to-end tests via Playwright (a one-time browser
+install every reviewer would need). Keeping DOM access out of the logic modules is what makes the
+built-in runner sufficient: there is no need for a simulated DOM, and the split mirrors the thin
+controllers and plain service classes on the server, the same approach to testability taken on the C#
+side throughout this project.
