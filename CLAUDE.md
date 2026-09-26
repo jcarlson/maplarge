@@ -77,17 +77,17 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   `DECISIONS.md`. Static files are served from `wwwroot/`, so the SPA is just `wwwroot/index.html` plus
   whatever JS/TS is added alongside it.
 - `Controllers/DirectoryController.cs` — the JSON API, routed under `/api/dir`. `GET /api/dir?path=` lists a
-  directory via `FileSystemService` as a JSON `Listing` (400 if the path escapes the base, 404 if it does
-  not exist).
+  directory via `FileSystemService` as a JSON array of `FileSystemEntry` (400 if the path escapes the
+  base, 404 if it does not exist).
 - `Controllers/FileController.cs` — `GET /api/file?path=` serves a file via `FileSystemService.GetFileInfo`
   as a physical-file result: attachment named after the file, MIME type from the extension, range
   requests enabled (400 if the path escapes the base or is missing, 404 if there is no file there).
   `POST /api/file?path=` with a multipart `file` part writes the upload into the directory `path` via
-  `FileSystemService.WriteFileAsync`, never overwriting: 201 with the new `Entry` and a `Location` header,
+  `FileSystemService.WriteFileAsync`, never overwriting: 201 with the new `FileSystemEntry` and a `Location` header,
   400 for an escaping path or a non-plain file name, 404 if the directory is missing, 409 if the name is taken.
 - `Controllers/SearchController.cs` — `GET /api/search?q=` finds files and folders anywhere under the base
-  whose name contains `q` (case-insensitive) via `FileSystemService.Search`, returned as a JSON `Listing`
-  (400 if `q` is missing or blank).
+  whose name contains `q` (case-insensitive) via `FileSystemService.Search`, returned as a JSON array of
+  `FileSystemEntry` (400 if `q` is missing or blank).
 - `wwwroot/index.html` — the SPA's page, launched by default (`launchUrl: index.html`): the
   `<script type="module" src="js/main.js">` tag in the head (module scripts are deferred, so it runs
   after the DOM is parsed) and the `<main id="listing">` container the view renders into.
@@ -96,11 +96,12 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   the `App` with both, and parses `location.hash` with `parseState` into a `navigate` call, once on load
   and on every `hashchange`. Deliberately thin and untested, per decision 14.
 - `wwwroot/js/app.js` — the `App` class, the root of the SPA, constructed with an `ApiClient` and a
-  view. `navigate(urlState)` loads the `Listing` for the state's `pwd` (the server accepts the leading
-  slash) and passes the `pwd` and listing to the view's `showListing`. It touches neither the location nor the DOM and
-  stores nothing: the hash is the source of truth for state. Tested with fakes for both dependencies.
+  view. `navigate(urlState)` loads the entries for the state's `pwd` (the server accepts the leading
+  slash) and passes the `pwd` and entries to the view's `showListing`. It touches neither the location
+  nor the DOM and stores nothing: the hash is the source of truth for state. Tested with fakes for both
+  dependencies.
 - `wwwroot/js/view.js` — `View`, the DOM side: constructed with a container element,
-  `showListing(pwd, listing)` replaces its contents with a `<table>`: a `<thead>` with Name and Size, a
+  `showListing(pwd, entries)` replaces its contents with a `<table>`: a `<thead>` with Name and Size, a
   `<tbody>` with one row per `listingRows` row (a link with its `href` and `name`, and a cell with its
   `size`), and a `<tfoot>` row from `listingSummary`, all via `createElement` and `textContent` (never
   `innerHTML`). Navigation needs no click handlers: a
@@ -111,14 +112,16 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   client.
 - `wwwroot/js/api-client.js` — `ApiClient`, the browser's view of the JSON API, with `fetch` injected
   through the constructor so tests pass a fake. `listDirectory(path)` calls `GET /api/dir` and resolves
-  to the `Listing`; a non-2xx status rejects with an `ApiError` carrying the HTTP status. The module
+  to the `Entry[]`; a non-2xx status rejects with an `ApiError` carrying the HTTP status. The module
   also exports `fileUrl(path)`, the `GET /api/file` link for a download (followed by the browser, not
-  fetched). The JSDoc typedefs for `Listing` and `Entry` live here too.
+  fetched). The JSDoc typedef for `Entry` (the client's name for the server's `FileSystemEntry`) lives
+  here too.
 - `wwwroot/js/view-helpers.js` — pure functions the view calls, tested in
-  `TestProject.Tests/js/view-helpers.test.js`. `listingRows(pwd, listing)` is the row model: `.` and `..`
+  `TestProject.Tests/js/view-helpers.test.js`. `listingRows(pwd, entries)` is the row model: `.` and `..`
   (via `parentPath`; the base is its own parent) then one `{ name, href, size }` per entry, built from
-  the per-entry helpers (decision 16). `listingSummary(listing)` is the footer: `counts` ("2 folders,
-  1 file", computed from the entries) and `totalSize` (the server's total via `formatSize`).
+  the per-entry helpers (decision 16). `listingSummary(entries)` is the footer: `counts` ("2 folders,
+  1 file") and `totalSize` (the file sizes summed, via `formatSize`), both computed on the client
+  (decision 17).
   `entryHref(entry)` is the link for an entry: a directory
   links to its own listing in the hash (via `serializeState`, dropping any search), a file to `fileUrl`.
   `entryName(entry)` is the last path segment, with a trailing `/` for a directory. `entrySize(entry)`
@@ -129,15 +132,16 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   `#/path/to/dir?key=value` (decision 15): `parseState(hash)` and `serializeState(state)`, pure string
   logic with no DOM access. `pwd` always starts with `/`; `query` is a generic object of the pairs after
   the `?`. Tested in both directions in `TestProject.Tests/js/url-state.test.js`.
-- `Models/Listing.cs` — the API's view of a set of entries: `Listing` (built from `Entry` values, exposing
-  `Entries` and `TotalSize`) and the `Entry(Path, IsDirectory, Size)` record, whose static `From` builds one
-  from the base directory and a `FileSystemInfo` (the only place a `FileSystemInfo` is read). Entries are
-  base-relative, directories first, then files, each in ordinal order; `Size` is bytes for a file, `null` for
-  a directory. `Listing` is testable without a filesystem.
+- `Models/FileSystemEntry.cs` — the `FileSystemEntry(Path, IsDirectory, Size)` record, the shape every API
+  response is made of, whose static `From` builds one from the base directory and a `FileSystemInfo` (the
+  only place a `FileSystemInfo` is read). Paths are base-relative; `Size` is bytes for a file, `null` for a
+  directory. There is no wrapper model: listings are plain arrays, and counts and totals are the client's
+  job (decision 17).
 - `Services/FileSystemService.cs` — the operations on the configured base directory (`ListDirectory`,
   `Search`, `GetFileInfo`, `WriteFileAsync`), taking paths relative to the base. `ListDirectory` and
-  `Search` return a `Listing`; `Search` walks the whole base recursively and matches the entry name only.
-  `WriteFileAsync` creates a new file (never overwrites) and returns its `Entry`. Constructed in
+  `Search` return an `IReadOnlyList<FileSystemEntry>` ordered directories first, then files, each group in
+  ordinal path order; `Search` walks the whole base recursively and matches the entry name only.
+  `WriteFileAsync` creates a new file (never overwrites) and returns its `FileSystemEntry`. Constructed in
   `Program.cs` from `FileBrowser:BaseDirectory` and registered as a singleton.
 - `Services/EntryExistsException.cs` — thrown by the service when a create would clash with an existing
   file or directory; the controller maps it to 409.

@@ -54,13 +54,13 @@ namespace TestProject.Controllers {
         /// never overwritten.
         /// </summary>
         /// <returns>
-        /// 201 with the new <see cref="Entry"/> and its download URL in <c>Location</c>; 400 if the path
+        /// 201 with the new <see cref="FileSystemEntry"/> and its download URL in <c>Location</c>; 400 if the path
         /// escapes the base or the file name is not a plain name; 404 if the directory does not exist;
         /// 409 if a file or directory with that name already exists.
         /// </returns>
         [HttpPost]
-        public async Task<ActionResult<Entry>> UploadFile(IFormFile file, [FromQuery] string path = "", CancellationToken cancellationToken = default) {
-            Entry entry;
+        public async Task<ActionResult<FileSystemEntry>> UploadFile(IFormFile file, [FromQuery] string path = "", CancellationToken cancellationToken = default) {
+            FileSystemEntry entry;
             try {
                 using var content = file.OpenReadStream();
                 entry = await _fileSystem.WriteFileAsync(path, file.FileName, content, cancellationToken);

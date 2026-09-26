@@ -62,7 +62,7 @@ test("parentPath drops the last segment; the base is its own parent", () => {
 });
 
 test("listingRows starts with . and .. then one row per entry", () => {
-    const rows = listingRows("/photos", { entries: [directory, file], totalSize: 12 });
+    const rows = listingRows("/photos", [directory, file]);
 
     assert.deepEqual(rows, [
         { name: ".", href: "#/photos", size: "--" },
@@ -73,18 +73,24 @@ test("listingRows starts with . and .. then one row per entry", () => {
 });
 
 test("listingRows at the base points both . and .. at the base", () => {
-    const rows = listingRows("/", { entries: [], totalSize: 0 });
+    const rows = listingRows("/", []);
 
     assert.deepEqual(rows.map(row => row.href), ["#/", "#/"]);
 });
 
-test("listingSummary counts folders and files and formats the server's total", () => {
-    const summary = listingSummary({ entries: [directory, directory, file], totalSize: 1536 });
+test("listingSummary counts folders and files and totals the file sizes", () => {
+    const big = { path: "big.bin", isDirectory: false, size: 1524 };
 
-    assert.deepEqual(summary, { counts: "2 folders, 1 file", totalSize: "1.50 K" });
+    const summary = listingSummary([directory, directory, file, big]);
+
+    assert.deepEqual(summary, { counts: "2 folders, 2 files", totalSize: "1.50 K" });
 });
 
 test("listingSummary uses the singular for one and the plural for zero", () => {
-    assert.equal(listingSummary({ entries: [directory], totalSize: 0 }).counts, "1 folder, 0 files");
-    assert.equal(listingSummary({ entries: [], totalSize: 0 }).counts, "0 folders, 0 files");
+    assert.equal(listingSummary([directory]).counts, "1 folder, 0 files");
+    assert.equal(listingSummary([]).counts, "0 folders, 0 files");
+});
+
+test("listingSummary totals zero for no files, ignoring directories", () => {
+    assert.equal(listingSummary([directory]).totalSize, "0 B");
 });

@@ -2,14 +2,14 @@ using TestProject.Models;
 
 namespace TestProject.Tests {
     /// <summary>
-    /// Exercises <see cref="Entry.From"/> against a throwaway directory under the system temp
+    /// Exercises <see cref="FileSystemEntry.From"/> against a throwaway directory under the system temp
     /// folder. Real files are needed because a file's size is read from the disk.
     /// </summary>
-    public class EntryTests : IDisposable {
+    public class FileSystemEntryTests : IDisposable {
         private readonly string _baseDirectory =
-            Path.Combine(Path.GetTempPath(), "EntryTests-" + Guid.NewGuid());
+            Path.Combine(Path.GetTempPath(), "FileSystemEntryTests-" + Guid.NewGuid());
 
-        public EntryTests() {
+        public FileSystemEntryTests() {
             Directory.CreateDirectory(_baseDirectory);
         }
 
@@ -23,9 +23,9 @@ namespace TestProject.Tests {
             var file = Path.Combine(_baseDirectory, "photos", "cat.jpg");
             File.WriteAllText(file, "meow");
 
-            var entry = Entry.From(_baseDirectory, new FileInfo(file));
+            var entry = FileSystemEntry.From(_baseDirectory, new FileInfo(file));
 
-            Assert.Equal(new Entry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 4), entry);
+            Assert.Equal(new FileSystemEntry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 4), entry);
         }
 
         [Fact]
@@ -33,7 +33,7 @@ namespace TestProject.Tests {
             var file = Path.Combine(_baseDirectory, "empty.txt");
             File.WriteAllText(file, "");
 
-            var entry = Entry.From(_baseDirectory, new FileInfo(file));
+            var entry = FileSystemEntry.From(_baseDirectory, new FileInfo(file));
 
             Assert.Equal(0, entry.Size);
         }
@@ -43,9 +43,9 @@ namespace TestProject.Tests {
             var directory = Path.Combine(_baseDirectory, "photos");
             Directory.CreateDirectory(directory);
 
-            var entry = Entry.From(_baseDirectory, new DirectoryInfo(directory));
+            var entry = FileSystemEntry.From(_baseDirectory, new DirectoryInfo(directory));
 
-            Assert.Equal(new Entry("photos", IsDirectory: true, Size: null), entry);
+            Assert.Equal(new FileSystemEntry("photos", IsDirectory: true, Size: null), entry);
         }
     }
 }

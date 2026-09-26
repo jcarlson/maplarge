@@ -299,3 +299,24 @@ presentation choice. On the client they cost a few lines in a pure module and ar
 other view decision. The row model is a small step beyond the per-entry helpers used until now, taken
 because `.` and `..` are not entries and would otherwise have needed special cases inside the view, which
 decision 14 keeps free of decisions; with rows, the view is the same loop for every kind of row.
+
+## 17. The `Listing` wrapper is gone: the API returns arrays of `FileSystemEntry`, and the client counts and totals
+
+**Decision:** `GET /api/dir` and `GET /api/search` now return a plain JSON array of `FileSystemEntry`
+(the record previously named `Entry`, moved to `Models/FileSystemEntry.cs`). The `Listing` class from
+decisions 10 and 11, with its `Entries` and `TotalSize`, is deleted; the directories-first ordinal
+ordering it applied now lives in `FileSystemService`, which returns an ordered
+`IReadOnlyList<FileSystemEntry>` from both `ListDirectory` and `Search`. The file and folder counts and
+the total size shown under a listing are computed on the client, in `listingSummary` in
+`wwwroot/js/view-helpers.js`, from the entries it already has.
+
+**Why:** Once the client was counting folders and files for the footer (decision 16 put that with the
+other view decisions), it had every entry in hand and summing their sizes was one more line beside the
+counts; sending a total the client could trivially derive made the response carry two representations
+of the same fact, and a wrapper object whose only other member was the array. Removing it leaves one
+model on the server, one array on the wire and one place, the client, that decides what a listing
+displays, which is where `.` and `..` and the size formatting already were. Ordering stays on the server
+for the reason decision 10 gave: it is the same on every platform and the client renders the list as
+given. This reverses part of decision 11, which is the expected outcome of building one step at a time:
+the total was the right thing to add when the server was the only place that could compute it, and the
+right thing to remove once it was not.

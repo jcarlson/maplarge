@@ -24,14 +24,14 @@ namespace TestProject.Tests {
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
             File.WriteAllText(Path.Combine(_baseDirectory, "photos", "nested.jpg"), "");
 
-            var listing = new FileSystemService(_baseDirectory).ListDirectory();
+            var entries = new FileSystemService(_baseDirectory).ListDirectory();
 
             Assert.Equal(
                 new[] {
-                    new Entry("photos", IsDirectory: true, Size: null),
-                    new Entry("notes.txt", IsDirectory: false, Size: 5),
+                    new FileSystemEntry("photos", IsDirectory: true, Size: null),
+                    new FileSystemEntry("notes.txt", IsDirectory: false, Size: 5),
                 },
-                listing.Entries);
+                entries);
         }
 
         [Theory]
@@ -43,14 +43,14 @@ namespace TestProject.Tests {
             File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg"), "meow");
             File.WriteAllText(Path.Combine(_baseDirectory, "unrelated.txt"), "");
 
-            var listing = new FileSystemService(_baseDirectory).ListDirectory(path);
+            var entries = new FileSystemService(_baseDirectory).ListDirectory(path);
 
             Assert.Equal(
                 new[] {
-                    new Entry(Path.Combine("photos", "2024"), IsDirectory: true, Size: null),
-                    new Entry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 4),
+                    new FileSystemEntry(Path.Combine("photos", "2024"), IsDirectory: true, Size: null),
+                    new FileSystemEntry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 4),
                 },
-                listing.Entries);
+                entries);
         }
 
         [Fact]
@@ -68,51 +68,53 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void ListDirectory_EmptyDirectory_ReturnsEmptyListing() {
-            var listing = new FileSystemService(_baseDirectory).ListDirectory();
+        public void ListDirectory_EmptyDirectory_ReturnsNoEntries() {
+            var entries = new FileSystemService(_baseDirectory).ListDirectory();
 
-            Assert.Empty(listing.Entries);
-            Assert.Equal(0, listing.TotalSize);
+            Assert.Empty(entries);
         }
 
         [Fact]
-        public void ListDirectory_TotalsSizesOfFilesInThatDirectoryOnly() {
-            File.WriteAllText(Path.Combine(_baseDirectory, "a.txt"), "12345");
-            File.WriteAllText(Path.Combine(_baseDirectory, "b.txt"), "678");
-            Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
-            File.WriteAllText(Path.Combine(_baseDirectory, "photos", "nested.jpg"), "not counted");
+        public void ListDirectory_OrdersDirectoriesBeforeFiles_EachInOrdinalOrder() {
+            // Names chosen so ordinal order differs from natural/numeric order and so a file
+            // would sort before a directory if the two kinds were not separated.
+            foreach (var name in new[] { "z", "10", "2" }) {
+                Directory.CreateDirectory(Path.Combine(_baseDirectory, name));
+            }
+            foreach (var name in new[] { "b.txt", "a.txt", "10.txt", "2.txt" }) {
+                File.WriteAllText(Path.Combine(_baseDirectory, name), "");
+            }
 
-            var listing = new FileSystemService(_baseDirectory).ListDirectory();
+            var entries = new FileSystemService(_baseDirectory).ListDirectory();
 
-            Assert.Equal(8, listing.TotalSize);
+            Assert.Equal(new[] { "10", "2", "z", "10.txt", "2.txt", "a.txt", "b.txt" }, entries.Select(e => e.Path));
         }
 
         [Fact]
-        public void Search_FindsMatchesAtEveryDepthOrderedLikeAListing() {
+        public void Search_FindsMatchesAtEveryDepthOrderedLikeADirectoryListing() {
             File.WriteAllText(Path.Combine(_baseDirectory, "cat.txt"), "12");
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos", "cats"));
             File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cats", "tabby-cat.jpg"), "123");
             File.WriteAllText(Path.Combine(_baseDirectory, "photos", "dog.jpg"), "");
 
-            var listing = new FileSystemService(_baseDirectory).Search("cat");
+            var entries = new FileSystemService(_baseDirectory).Search("cat");
 
             Assert.Equal(
                 new[] {
-                    new Entry(Path.Combine("photos", "cats"), IsDirectory: true, Size: null),
-                    new Entry("cat.txt", IsDirectory: false, Size: 2),
-                    new Entry(Path.Combine("photos", "cats", "tabby-cat.jpg"), IsDirectory: false, Size: 3),
+                    new FileSystemEntry(Path.Combine("photos", "cats"), IsDirectory: true, Size: null),
+                    new FileSystemEntry("cat.txt", IsDirectory: false, Size: 2),
+                    new FileSystemEntry(Path.Combine("photos", "cats", "tabby-cat.jpg"), IsDirectory: false, Size: 3),
                 },
-                listing.Entries);
-            Assert.Equal(5, listing.TotalSize);
+                entries);
         }
 
         [Fact]
         public void Search_IgnoresCase() {
             File.WriteAllText(Path.Combine(_baseDirectory, "README.md"), "");
 
-            var listing = new FileSystemService(_baseDirectory).Search("readme");
+            var entries = new FileSystemService(_baseDirectory).Search("readme");
 
-            Assert.Equal(new[] { new Entry("README.md", IsDirectory: false, Size: 0) }, listing.Entries);
+            Assert.Equal(new[] { new FileSystemEntry("README.md", IsDirectory: false, Size: 0) }, entries);
         }
 
         [Fact]
@@ -120,19 +122,18 @@ namespace TestProject.Tests {
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
             File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg"), "");
 
-            var listing = new FileSystemService(_baseDirectory).Search("photos");
+            var entries = new FileSystemService(_baseDirectory).Search("photos");
 
-            Assert.Equal(new[] { new Entry("photos", IsDirectory: true, Size: null) }, listing.Entries);
+            Assert.Equal(new[] { new FileSystemEntry("photos", IsDirectory: true, Size: null) }, entries);
         }
 
         [Fact]
-        public void Search_NoMatches_ReturnsEmptyListing() {
+        public void Search_NoMatches_ReturnsNoEntries() {
             File.WriteAllText(Path.Combine(_baseDirectory, "dog.jpg"), "");
 
-            var listing = new FileSystemService(_baseDirectory).Search("cat");
+            var entries = new FileSystemService(_baseDirectory).Search("cat");
 
-            Assert.Empty(listing.Entries);
-            Assert.Equal(0, listing.TotalSize);
+            Assert.Empty(entries);
         }
 
         [Theory]
@@ -197,7 +198,7 @@ namespace TestProject.Tests {
 
             var entry = await new FileSystemService(_baseDirectory).WriteFileAsync("", "notes.txt", content);
 
-            Assert.Equal(new Entry("notes.txt", IsDirectory: false, Size: 5), entry);
+            Assert.Equal(new FileSystemEntry("notes.txt", IsDirectory: false, Size: 5), entry);
             Assert.Equal("hello", File.ReadAllText(Path.Combine(_baseDirectory, "notes.txt")));
         }
 
@@ -211,7 +212,7 @@ namespace TestProject.Tests {
 
             var entry = await new FileSystemService(_baseDirectory).WriteFileAsync(directoryPath, "cat.jpg", content);
 
-            Assert.Equal(new Entry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 4), entry);
+            Assert.Equal(new FileSystemEntry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 4), entry);
             Assert.Equal("meow", File.ReadAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg")));
         }
 
@@ -280,9 +281,9 @@ namespace TestProject.Tests {
             File.WriteAllText(Path.Combine(_baseDirectory, "file.txt"), "");
             var unnormalized = _baseDirectory + Path.DirectorySeparatorChar + "." + Path.DirectorySeparatorChar;
 
-            var listing = new FileSystemService(unnormalized).ListDirectory();
+            var entries = new FileSystemService(unnormalized).ListDirectory();
 
-            Assert.Equal(new[] { new Entry("file.txt", IsDirectory: false, Size: 0) }, listing.Entries);
+            Assert.Equal(new[] { new FileSystemEntry("file.txt", IsDirectory: false, Size: 0) }, entries);
         }
 
         [Fact]

@@ -21,9 +21,9 @@ namespace TestProject.Services {
         /// </summary>
         /// <exception cref="ArgumentException">The path would escape the base directory.</exception>
         /// <exception cref="DirectoryNotFoundException">The directory does not exist under the base.</exception>
-        public Listing ListDirectory(string path = "") {
+        public IReadOnlyList<FileSystemEntry> ListDirectory(string path = "") {
             var directory = new DirectoryInfo(_paths.Resolve(path));
-            return new Listing(directory.EnumerateFileSystemInfos().Select(info => Entry.From(_paths.BaseDirectory, info)));
+            return ToOrderedEntries(directory.EnumerateFileSystemInfos());
         }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace TestProject.Services {
         /// failing the whole search.
         /// </summary>
         /// <exception cref="ArgumentException">The query is empty or whitespace.</exception>
-        public Listing Search(string query) {
+        public IReadOnlyList<FileSystemEntry> Search(string query) {
             if (string.IsNullOrWhiteSpace(query)) {
                 throw new ArgumentException("Search query must not be empty.", nameof(query));
             }
@@ -48,8 +48,19 @@ namespace TestProject.Services {
             var matches = new DirectoryInfo(_paths.BaseDirectory)
                 .EnumerateFileSystemInfos("*", options)
                 .Where(info => info.Name.Contains(query, StringComparison.OrdinalIgnoreCase));
-            return new Listing(matches.Select(info => Entry.From(_paths.BaseDirectory, info)));
+            return ToOrderedEntries(matches);
         }
+
+        /// <summary>
+        /// The entries for a set of infos: directories first, then files, each group in ordinal
+        /// path order, so the client can render the list as given and the order is the same on
+        /// every platform.
+        /// </summary>
+        private IReadOnlyList<FileSystemEntry> ToOrderedEntries(IEnumerable<FileSystemInfo> infos) =>
+            infos.Select(info => FileSystemEntry.From(_paths.BaseDirectory, info))
+                .OrderByDescending(entry => entry.IsDirectory)
+                .ThenBy(entry => entry.Path, StringComparer.Ordinal)
+                .ToList();
 
         /// <summary>
         /// Describes the file at <paramref name="path"/>, given relative to the base. No handle is
@@ -74,13 +85,13 @@ namespace TestProject.Services {
         /// <paramref name="directoryPath"/>, a directory given relative to the base. The file must not
         /// already exist; nothing is ever overwritten.
         /// </summary>
-        /// <returns>The new file as the <see cref="Entry"/> a listing of its directory would show.</returns>
+        /// <returns>The new file as the <see cref="FileSystemEntry"/> a listing of its directory would show.</returns>
         /// <exception cref="ArgumentException">
         /// The directory path would escape the base, or the file name is empty or not a single path segment.
         /// </exception>
         /// <exception cref="DirectoryNotFoundException">The directory does not exist under the base.</exception>
         /// <exception cref="EntryExistsException">A file or directory with that name already exists there.</exception>
-        public async Task<Entry> WriteFileAsync(string directoryPath, string fileName, Stream content, CancellationToken cancellationToken = default) {
+        public async Task<FileSystemEntry> WriteFileAsync(string directoryPath, string fileName, Stream content, CancellationToken cancellationToken = default) {
             var directory = new DirectoryInfo(_paths.Resolve(directoryPath));
             if (!directory.Exists) {
                 throw new DirectoryNotFoundException($"Directory does not exist under the base directory: {directoryPath}");
@@ -101,7 +112,7 @@ namespace TestProject.Services {
                 await content.CopyToAsync(file, cancellationToken);
             }
 
-            return Entry.From(_paths.BaseDirectory, new FileInfo(target));
+            return FileSystemEntry.From(_paths.BaseDirectory, new FileInfo(target));
         }
     }
 }

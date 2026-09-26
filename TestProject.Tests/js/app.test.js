@@ -2,10 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { App } from "../../wwwroot/js/app.js";
 
-const listing = {
-    entries: [{ path: "photos/cat.jpg", isDirectory: false, size: 12 }],
-    totalSize: 12,
-};
+const entries = [{ path: "photos/cat.jpg", isDirectory: false, size: 12 }];
 
 /** A stand-in for ApiClient that records the paths it was asked to list. */
 function fakeApi() {
@@ -14,7 +11,7 @@ function fakeApi() {
         calls,
         async listDirectory(path) {
             calls.push(path);
-            return listing;
+            return entries;
         },
     };
 }
@@ -24,8 +21,8 @@ function fakeView() {
     const shown = [];
     return {
         shown,
-        showListing(pwd, listing) {
-            shown.push({ pwd, listing });
+        showListing(pwd, entries) {
+            shown.push({ pwd, entries });
         },
     };
 }
@@ -39,13 +36,13 @@ test("navigate lists the directory the URL state points at", async () => {
     assert.deepEqual(api.calls, ["/photos"]);
 });
 
-test("navigate shows the listing it loaded, with the directory it is for", async () => {
+test("navigate shows the entries it loaded, with the directory they are in", async () => {
     const view = fakeView();
     const app = new App(fakeApi(), view);
 
     await app.navigate({ pwd: "/photos", query: {} });
 
-    assert.deepEqual(view.shown, [{ pwd: "/photos", listing }]);
+    assert.deepEqual(view.shown, [{ pwd: "/photos", entries }]);
 });
 
 test("each navigation lists and shows its own directory", async () => {

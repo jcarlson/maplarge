@@ -14,18 +14,18 @@ export class View {
 
     /**
      * @param {string} pwd The directory being listed, as `UrlState.pwd`.
-     * @param {import("./api-client.js").Listing} listing
+     * @param {import("./api-client.js").Entry[]} entries
      */
-    showListing(pwd, listing) {
+    showListing(pwd, entries) {
         const body = document.createElement("tbody");
-        for (const { name, href, size } of listingRows(pwd, listing)) {
+        for (const { name, href, size } of listingRows(pwd, entries)) {
             const link = document.createElement("a");
             link.href = href;
             link.textContent = name;
             body.append(row("td", [link, size]));
         }
 
-        const { counts, totalSize } = listingSummary(listing);
+        const { counts, totalSize } = listingSummary(entries);
         const table = document.createElement("table");
         table.append(
             section("thead", row("th", ["Name", "Size"])),

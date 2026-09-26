@@ -12,29 +12,30 @@ import { serializeState } from "./url-state.js";
  * The rows for a directory listing, `ls -a` style: `.` (the directory itself) and
  * `..` (its parent; the base's parent is the base) first, then one row per entry.
  * @param {string} pwd The directory being listed, as `UrlState.pwd`.
- * @param {import("./api-client.js").Listing} listing
+ * @param {import("./api-client.js").Entry[]} entries
  * @returns {Row[]}
  */
-export function listingRows(pwd, listing) {
+export function listingRows(pwd, entries) {
     return [
         { name: ".", href: directoryHref(pwd), size: "--" },
         { name: "..", href: directoryHref(parentPath(pwd)), size: "--" },
-        ...listing.entries.map(entry => ({ name: entryName(entry), href: entryHref(entry), size: entrySize(entry) })),
+        ...entries.map(entry => ({ name: entryName(entry), href: entryHref(entry), size: entrySize(entry) })),
     ];
 }
 
 /**
- * The footer of the listing table: how many folders and files it holds, and their
- * total size. Counts are taken from the entries; the total is the server's.
- * @param {import("./api-client.js").Listing} listing
+ * The footer of the listing table: how many folders and files it holds, and the
+ * total size of the files (directories have none and contribute nothing).
+ * @param {import("./api-client.js").Entry[]} entries
  * @returns {{ counts: string, totalSize: string }}
  */
-export function listingSummary(listing) {
-    const folders = listing.entries.filter(entry => entry.isDirectory).length;
-    const files = listing.entries.length - folders;
+export function listingSummary(entries) {
+    const folders = entries.filter(entry => entry.isDirectory).length;
+    const files = entries.length - folders;
+    const bytes = entries.reduce((sum, entry) => sum + (entry.size ?? 0), 0);
     return {
         counts: `${plural(folders, "folder")}, ${plural(files, "file")}`,
-        totalSize: formatSize(listing.totalSize),
+        totalSize: formatSize(bytes),
     };
 }
 

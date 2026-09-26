@@ -32,20 +32,19 @@ namespace TestProject.Tests {
             var result = _controller.Search("cat");
 
             var ok = Assert.IsType<OkObjectResult>(result.Result);
-            var listing = Assert.IsType<Listing>(ok.Value);
-            Assert.Equal(new[] { new Entry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 4) }, listing.Entries);
-            Assert.Equal(4, listing.TotalSize);
+            var entries = Assert.IsAssignableFrom<IReadOnlyList<FileSystemEntry>>(ok.Value);
+            Assert.Equal(new[] { new FileSystemEntry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 4) }, entries);
         }
 
         [Fact]
-        public void Search_NoMatches_ReturnsOkWithEmptyListing() {
+        public void Search_NoMatches_ReturnsOkWithNoEntries() {
             File.WriteAllText(Path.Combine(_baseDirectory, "dog.jpg"), "");
 
             var result = _controller.Search("cat");
 
             var ok = Assert.IsType<OkObjectResult>(result.Result);
-            var listing = Assert.IsType<Listing>(ok.Value);
-            Assert.Empty(listing.Entries);
+            var entries = Assert.IsAssignableFrom<IReadOnlyList<FileSystemEntry>>(ok.Value);
+            Assert.Empty(entries);
         }
 
         [Theory]

@@ -24,21 +24,20 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void List_DefaultPath_ReturnsOkWithBaseListing() {
+        public void List_DefaultPath_ReturnsOkWithBaseEntries() {
             File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "hello");
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
 
             var result = _controller.List();
 
             var ok = Assert.IsType<OkObjectResult>(result.Result);
-            var listing = Assert.IsType<Listing>(ok.Value);
+            var entries = Assert.IsAssignableFrom<IReadOnlyList<FileSystemEntry>>(ok.Value);
             Assert.Equal(
                 new[] {
-                    new Entry("photos", IsDirectory: true, Size: null),
-                    new Entry("notes.txt", IsDirectory: false, Size: 5),
+                    new FileSystemEntry("photos", IsDirectory: true, Size: null),
+                    new FileSystemEntry("notes.txt", IsDirectory: false, Size: 5),
                 },
-                listing.Entries);
-            Assert.Equal(5, listing.TotalSize);
+                entries);
         }
 
         [Fact]
@@ -49,8 +48,8 @@ namespace TestProject.Tests {
             var result = _controller.List("photos");
 
             var ok = Assert.IsType<OkObjectResult>(result.Result);
-            var listing = Assert.IsType<Listing>(ok.Value);
-            Assert.Equal(new[] { new Entry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 0) }, listing.Entries);
+            var entries = Assert.IsAssignableFrom<IReadOnlyList<FileSystemEntry>>(ok.Value);
+            Assert.Equal(new[] { new FileSystemEntry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 0) }, entries);
         }
 
         [Fact]

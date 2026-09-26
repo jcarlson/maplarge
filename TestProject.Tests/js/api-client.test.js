@@ -19,16 +19,13 @@ function fakeFetch(status, body) {
     return { fetch, calls };
 }
 
-const listing = {
-    entries: [
-        { path: "photos", isDirectory: true, size: null },
-        { path: "notes.txt", isDirectory: false, size: 12 },
-    ],
-    totalSize: 12,
-};
+const entries = [
+    { path: "photos", isDirectory: true, size: null },
+    { path: "notes.txt", isDirectory: false, size: 12 },
+];
 
 test("listDirectory requests /api/dir with the path as a query parameter", async () => {
-    const { fetch, calls } = fakeFetch(200, listing);
+    const { fetch, calls } = fakeFetch(200, entries);
 
     await new ApiClient(fetch).listDirectory("photos/2024 summer");
 
@@ -36,19 +33,19 @@ test("listDirectory requests /api/dir with the path as a query parameter", async
 });
 
 test("listDirectory sends an empty path for the base directory", async () => {
-    const { fetch, calls } = fakeFetch(200, listing);
+    const { fetch, calls } = fakeFetch(200, entries);
 
     await new ApiClient(fetch).listDirectory("");
 
     assert.deepEqual(calls, ["/api/dir?path="]);
 });
 
-test("listDirectory returns the listing the server sent", async () => {
-    const { fetch } = fakeFetch(200, listing);
+test("listDirectory returns the entries the server sent", async () => {
+    const { fetch } = fakeFetch(200, entries);
 
     const result = await new ApiClient(fetch).listDirectory("");
 
-    assert.deepEqual(result, listing);
+    assert.deepEqual(result, entries);
 });
 
 test("listDirectory throws an ApiError carrying the status for a non-OK response", async () => {

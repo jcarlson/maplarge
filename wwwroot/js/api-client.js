@@ -1,14 +1,8 @@
 /**
- * @typedef {object} Entry One file or directory, as the server's `Entry` serialises.
+ * @typedef {object} Entry One file or directory, as the server's `FileSystemEntry` serialises.
  * @property {string} path Path relative to the browsable base directory.
  * @property {boolean} isDirectory
  * @property {number | null} size Bytes for a file, `null` for a directory.
- */
-
-/**
- * @typedef {object} Listing A set of entries, as the server's `Listing` serialises.
- * @property {Entry[]} entries Directories first, then files, each in ordinal path order.
- * @property {number} totalSize Sum of the file sizes in `entries`, in bytes.
  */
 
 /** Thrown when the server answers with a non-2xx status. */
@@ -44,9 +38,10 @@ export class ApiClient {
     }
 
     /**
-     * Lists the entries directly inside `path`. An empty path lists the base itself.
+     * Lists the entries directly inside `path`, directories first, then files, each in
+     * ordinal path order. An empty path lists the base itself.
      * @param {string} path Directory path relative to the base.
-     * @returns {Promise<Listing>}
+     * @returns {Promise<Entry[]>}
      * @throws {ApiError} 400 if the path escapes the base, 404 if the directory does not exist.
      */
     async listDirectory(path) {

@@ -7,7 +7,7 @@
 export class App {
     /**
      * @param {import("./api-client.js").ApiClient} api
-     * @param {{ showListing(pwd: string, listing: import("./api-client.js").Listing): void }} view
+     * @param {{ showListing(pwd: string, entries: import("./api-client.js").Entry[]): void }} view
      */
     constructor(api, view) {
         this._api = api;
@@ -21,7 +21,7 @@ export class App {
      * @param {import("./url-state.js").UrlState} urlState The parsed URL state to move to.
      */
     async navigate(urlState) {
-        const listing = await this._api.listDirectory(urlState.pwd);
-        this._view.showListing(urlState.pwd, listing);
+        const entries = await this._api.listDirectory(urlState.pwd);
+        this._view.showListing(urlState.pwd, entries);
     }
 }
