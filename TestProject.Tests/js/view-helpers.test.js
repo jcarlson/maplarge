@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { entryHref, entryName, entrySize } from "../../wwwroot/js/view-helpers.js";
+import { entryHref, entryName, entrySize, formatSize } from "../../wwwroot/js/view-helpers.js";
 
 const directory = { path: "photos/2024 summer", isDirectory: true, size: null };
 const file = { path: "photos/cat.jpg", isDirectory: false, size: 12 };
@@ -22,7 +22,35 @@ test("entryName of a top-level entry is the whole path", () => {
     assert.equal(entryName({ path: "notes.txt", isDirectory: false, size: 0 }), "notes.txt");
 });
 
-test("entrySize is the byte count for a file and -- for a directory", () => {
-    assert.equal(entrySize(file), "12");
+test("entrySize is the formatted size for a file and -- for a directory", () => {
+    assert.equal(entrySize(file), "12 B");
+    assert.equal(entrySize({ path: "big.iso", isDirectory: false, size: 3 * 1024 ** 3 }), "3.00 G");
     assert.equal(entrySize(directory), "--");
+});
+
+test("formatSize shows whole bytes below 1 K", () => {
+    assert.equal(formatSize(0), "0 B");
+    assert.equal(formatSize(1), "1 B");
+    assert.equal(formatSize(1023), "1,023 B");
+});
+
+test("formatSize scales to the largest unit that keeps the number under 1,024", () => {
+    assert.equal(formatSize(1024), "1.00 K");
+    assert.equal(formatSize(1024 ** 2), "1.00 M");
+    assert.equal(formatSize(1024 ** 3), "1.00 G");
+    assert.equal(formatSize(1024 ** 4), "1.00 T");
+});
+
+test("formatSize rounds to two decimals", () => {
+    assert.equal(formatSize(1372), "1.34 K");
+    assert.equal(formatSize(1536), "1.50 K");
+    assert.equal(formatSize(2.345 * 1024 ** 2), "2.35 M");
+});
+
+test("formatSize separates thousands", () => {
+    assert.equal(formatSize(1000 * 1024 ** 2), "1,000.00 M");
+});
+
+test("formatSize stays in T beyond 1,024 T", () => {
+    assert.equal(formatSize(2048 * 1024 ** 4), "2,048.00 T");
 });

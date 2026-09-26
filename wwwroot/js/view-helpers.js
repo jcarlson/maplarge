@@ -27,11 +27,32 @@ export function entryName(entry) {
 }
 
 /**
- * The size column for an entry: the byte count of a file, `--` for a directory,
- * which has no size of its own.
+ * The size column for an entry: a file's size via `formatSize`, `--` for a
+ * directory, which has no size of its own.
  * @param {import("./api-client.js").Entry} entry
  * @returns {string}
  */
 export function entrySize(entry) {
-    return entry.isDirectory ? "--" : String(entry.size);
+    return entry.isDirectory ? "--" : formatSize(entry.size ?? 0);
+}
+
+const UNITS = ["B", "K", "M", "G", "T"];
+
+/**
+ * A byte count for people: scaled to the largest binary unit (1 K = 1,024 B) that
+ * keeps the number under 1,024, with two decimals and thousands separators.
+ * Whole bytes are shown without decimals.
+ * @param {number} bytes
+ * @returns {string}
+ */
+export function formatSize(bytes) {
+    let value = bytes;
+    let unit = 0;
+    while (value >= 1024 && unit < UNITS.length - 1) {
+        value /= 1024;
+        unit++;
+    }
+    const digits = unit === 0 ? 0 : 2;
+    const number = value.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    return `${number} ${UNITS[unit]}`;
 }

@@ -117,7 +117,9 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   `TestProject.Tests/js/view-helpers.test.js`. `entryHref(entry)` is the link for an entry: a directory
   links to its own listing in the hash (via `serializeState`, dropping any search), a file to `fileUrl`.
   `entryName(entry)` is the last path segment, with a trailing `/` for a directory. `entrySize(entry)`
-  is the byte count for a file and `--` for a directory.
+  is a file's size via `formatSize` and `--` for a directory. `formatSize(bytes)` scales to the largest
+  binary unit (B, K, M, G, T; 1 K = 1,024 B) that keeps the number under 1,024, with two decimals and
+  thousands separators; whole bytes have no decimals.
 - `wwwroot/js/url-state.js` — the `UrlState` `{ pwd, query }` and its URL-fragment form
   `#/path/to/dir?key=value` (decision 15): `parseState(hash)` and `serializeState(state)`, pure string
   logic with no DOM access. `pwd` always starts with `/`; `query` is a generic object of the pairs after
