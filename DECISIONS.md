@@ -253,3 +253,31 @@ install every reviewer would need). Keeping DOM access out of the logic modules 
 built-in runner sufficient: there is no need for a simulated DOM, and the split mirrors the thin
 controllers and plain service classes on the server, the same approach to testability taken on the C#
 side throughout this project.
+
+## 15. UI state lives in the URL fragment as `#/path/to/dir?key=value`, converted by a pure `state` module
+
+**Decision:** The SPA keeps its state in the URL fragment rather than in the path via the History API.
+The fragment reads like a path plus a query, `#/photos/2024?q=summer`: the directory being viewed, then
+any number of generic `key=value` pairs. `wwwroot/js/state.js` converts between that string and a plain
+`{ pwd, query }` object in both directions (`parseState`, `serializeState`) and never touches the DOM;
+reading and assigning `location.hash` is left to the caller. `pwd` always carries a leading `/` and is
+`/` for the base; `query` is an object of every pair after the `?`, so the module does not know what
+`q` or any future key means and needs no change when one is added. Each path segment is percent-encoded
+on its own, the pairs go through `URLSearchParams`, and the `?` is omitted when there are no pairs.
+Parsing is deliberately tolerant of what a hand-edited link can contain: a missing `#` or leading `/`,
+repeated or trailing slashes, and a percent-escape that does not decode is kept as typed rather than
+failing the whole page.
+
+**Why:** Deep-linking is a requirement, and both the fragment and the History API satisfy it, but the
+History API needs the server to answer every non-API path with `index.html`. That is one line in
+`Program.cs`, yet it couples the client to server routing and creates a namespace clash: a directory in
+the browsable root named `js` or `api` would produce URLs that the static file middleware or the API claim
+first, which would force a `/browse/` prefix to avoid. The fragment needs no server cooperation, which
+also matters for the "component in a dialog on a host page" bonus: a hash-driven browser works on any page
+at any path, whereas a path-driven one requires the host page to be served at every URL the component can
+produce. Back and forward navigation come free too, since assigning `location.hash` creates a history
+entry and fires `hashchange`. The path-like layout was chosen over a flat query string
+(`#path=photos%2F2024&q=summer`) because it is what a person expects to read and type in a link, at the
+cost of a few lines to split the path from the query. Keeping the conversion in a DOM-free module follows
+decision 14: it is tested on Node in both directions, including round-trips of paths containing `?`, `#`
+and `%`, and `App` remains the only code that reads the browser's location.
