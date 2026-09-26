@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ApiError } from "../../wwwroot/js/api-client.js";
-import { breadcrumbs, directoryHref, entryHref, entryName, entrySize, errorMessage, formatSize, listingRows, listingSummary, parentPath, searchRows } from "../../wwwroot/js/view-helpers.js";
+import { breadcrumbs, directoryHref, entryHref, entryName, entrySize, errorMessage, formatSize, listingRows, listingSummary, parentPath, searchRows, uploadErrorMessage } from "../../wwwroot/js/view-helpers.js";
 
 const directory = { path: "photos/2024 summer", isDirectory: true, size: null };
 const file = { path: "photos/cat.jpg", isDirectory: false, size: 12 };
@@ -137,4 +137,15 @@ test("errorMessage explains each API status in terms of the directory", () => {
 test("errorMessage falls back to the error's own message for anything else", () => {
     assert.equal(errorMessage("/", new TypeError("Failed to fetch")), "Something went wrong: Failed to fetch");
     assert.equal(errorMessage("/", "boom"), "Something went wrong: boom");
+});
+
+test("uploadErrorMessage explains each API status in terms of the file and directory", () => {
+    assert.equal(uploadErrorMessage("/photos", "cat.jpg", new ApiError(409, "/api/file")), "/photos already has an entry named cat.jpg.");
+    assert.equal(uploadErrorMessage("/nope", "cat.jpg", new ApiError(404, "/api/file")), "There is no directory at /nope to upload into.");
+    assert.equal(uploadErrorMessage("/", "..", new ApiError(400, "/api/file")), ".. is not a name that can be uploaded.");
+    assert.equal(uploadErrorMessage("/", "cat.jpg", new ApiError(500, "/api/file")), "The server could not take the upload (status 500).");
+});
+
+test("uploadErrorMessage falls back to the error's own message for anything else", () => {
+    assert.equal(uploadErrorMessage("/", "cat.jpg", new TypeError("Failed to fetch")), "Something went wrong: Failed to fetch");
 });

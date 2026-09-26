@@ -18,6 +18,10 @@ function fakeApi() {
             calls.push({ search: [path, query] });
             return entries;
         },
+        async upload(path, file) {
+            calls.push({ upload: [path, file.name] });
+            return entries[0];
+        },
     };
 }
 
@@ -63,6 +67,9 @@ function fakeView() {
         showError(pwd, error) {
             shown.push({ error: { pwd, error } });
         },
+        showUploadError(pwd, fileName, error) {
+            shown.push({ uploadError: { pwd, fileName, error } });
+        },
     };
 }
 
@@ -71,6 +78,7 @@ function failingApi(error) {
     return {
         listDirectory: async () => { throw error; },
         search: async () => { throw error; },
+        upload: async () => { throw error; },
     };
 }
 
@@ -170,4 +178,34 @@ test("a request that never reaches the server is shown as an error too", async (
     await startedApp({ api: failingApi(error), view });
 
     assert.deepEqual(view.shown, [{ error: { pwd: "/", error } }]);
+});
+
+test("upload sends the file into the current directory and shows that directory again", async () => {
+    const api = fakeApi();
+    const view = fakeView();
+    const app = await startedApp({ api, router: fakeRouter({ pwd: "/photos", query: {} }), view });
+
+    await app.upload(new File(["hi"], "notes.txt"));
+
+    assert.deepEqual(api.calls, [{ listDirectory: "/photos" }, { upload: ["/photos", "notes.txt"] }, { listDirectory: "/photos" }]);
+    assert.equal(view.shown.length, 2);
+});
+
+test("upload during a search shows the search again, so a matching new file appears", async () => {
+    const api = fakeApi();
+    const app = await startedApp({ api, router: fakeRouter({ pwd: "/photos", query: { q: "note" } }) });
+
+    await app.upload(new File([""], "notes.txt"));
+
+    assert.deepEqual(api.calls.at(-1), { search: ["/photos", "note"] });
+});
+
+test("a failed upload is reported for the file and directory, and the page is not reloaded", async () => {
+    const error = new ApiError(409, "/api/file");
+    const view = fakeView();
+    const app = new App(failingApi(error), fakeRouter({ pwd: "/photos", query: {} }), view);
+
+    await app.upload(new File([""], "notes.txt"));
+
+    assert.deepEqual(view.shown, [{ uploadError: { pwd: "/photos", fileName: "notes.txt", error } }]);
 });

@@ -8,6 +8,10 @@ import { View } from "./view.js";
 
 // fetch must be called on the window; passed bare, the client would call it on itself.
 const api = new ApiClient(fetch.bind(globalThis));
-const view = new View(document.getElementById("listing"), document.getElementById("search"));
+const view = new View(
+    document.getElementById("listing"),
+    document.getElementById("search"),
+    document.getElementById("upload"),
+);
 const app = new App(api, new Router(window), view);
 await app.start();

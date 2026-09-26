@@ -381,3 +381,25 @@ a "Something went wrong" message with its text rather than as silence, which is 
 a user and no worse for a developer, who still has the message. Status codes are translated on the
 client rather than sending messages from the server so the API stays a plain data API and the wording
 can change without touching C#.
+
+## 21. Upload is a form beside search: the file goes into the current directory and the view reloads
+
+**Decision:** `index.html` has an upload form with a required file input, a submit button and an
+`<output>`. The view reports the chosen file to `App.upload(file)`, which posts it through
+`ApiClient.upload(pwd, file)` into the directory the URL names now, then navigates to the current
+state again so the new file appears where the user is looking, in the listing or, during a search,
+in the results if it matches. A failure is reported in the form's `<output>` by `uploadErrorMessage`
+(409: the name is taken, 404: no such directory, 400: not an uploadable name, other statuses and
+network failures as for a load) and nothing else on the page changes. Every navigation resets the
+form, clearing the chosen file and any message. `ApiClient` sends a `FormData` with one `file` part,
+and its `_getJson` grew a `RequestInit` parameter rather than gaining a second request helper.
+
+**Why:** Uploading into "where I am" is what a file browser means by upload, and it needs no extra
+UI to pick a destination: the breadcrumbs already show it. Reloading the current state after success
+reuses `navigate` instead of inserting a row by hand, which keeps ordering, counts and totals right
+for free and works identically for a listing and a search. An upload failure is not a navigation
+failure, so it must not replace the table the way decision 20 does for a load: the user's place is
+intact and the message sits next to the thing they were doing. `<output>` is the element made for a
+form's result and takes part in `form.reset()`, so one reset call clears both the file and the message.
+The multipart request was checked end to end against the running server from Node's `FormData`, since
+a mismatch in the part name is the kind of bug unit tests with a fake `fetch` cannot see.

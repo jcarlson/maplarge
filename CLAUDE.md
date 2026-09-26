@@ -92,9 +92,10 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
 - `wwwroot/index.html` — the SPA's page, launched by default (`launchUrl: index.html`): the
   `<script type="module" src="js/main.js">` tag in the head (module scripts are deferred, so it runs
   after the DOM is parsed), the `<form id="search">` with its `q` input, submit button and clear link,
-  and the `<main id="listing">` container the view renders into.
+  the `<form id="upload">` with its required `file` input, submit button and `status` output, and the
+  `<main id="listing">` container the view renders into.
 - `wwwroot/js/main.js` — the entry point, wiring only: builds the `ApiClient` over the window's `fetch`,
-  the `Router` over `window`, the `View` over the container and search form, and the `App` over all
+  the `Router` over `window`, the `View` over the container and the two forms, and the `App` over all
   three, then awaits `app.start()`. Untested, per decision 14.
 - `wwwroot/js/app.js` — the `App` class, the root of the SPA: what the URL means and what the user's
   actions do. Constructed with an `ApiClient`, a `Router` and a `View`, which it gives itself via
@@ -104,15 +105,18 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   server accepts the leading slash), and passes the result to the view's `showSearchResults` or
   `showListing`. Whatever the load throws is passed to the view's `showError`, so `navigate` never
   rejects (decision 20). `search(text)` trims the text and moves the router to the same directory with
-  it as `q`, or with no query when blank. It touches neither the location nor the DOM and stores nothing:
+  it as `q`, or with no query when blank. `upload(file)` posts the file into the current directory and
+  navigates to the current state again so it appears, or reports a failure via `showUploadError` and
+  leaves the page alone (decision 21). It touches neither the location nor the DOM and stores nothing:
   the hash is the source of truth for state. Tested with fakes for all three dependencies.
 - `wwwroot/js/router.js` — `Router`, the only code that reads or writes `location`, over a `window`
   passed to its constructor: `current()` parses the hash into a `UrlState`, `go(changes)` assigns the
   merged hash (a history entry, and a `hashchange`), and `listen(callback)` reports the new state on
   every `hashchange`. Decides nothing. Tested with a fake window in `TestProject.Tests/js/router.test.js`.
-- `wwwroot/js/view.js` — `View`, the DOM side: constructed with a container element and the search
-  form, whose submit it handles by calling `app.search` with the box's text, once `setApp` has given it
-  an app (before that a submit goes nowhere).
+- `wwwroot/js/view.js` — `View`, the DOM side: constructed with a container element, the search form
+  and the upload form, whose submits it handles by calling `app.search` with the box's text and
+  `app.upload` with the chosen file, once `setApp` has given it an app (before that a submit goes
+  nowhere).
   `showListing(pwd, entries)` and `showSearchResults(pwd, query, entries)` fill the search box
   (empty for a listing, the query for results, so a deep link arrives filled in), point the clear link
   at `directoryHref(pwd)` and show it only during a search, then replace the container's contents with a
@@ -121,7 +125,9 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   `<table>`: a `<thead>` with Name and Size, a `<tbody>` with one row per `listingRows` or `searchRows`
   row (a link with its `href` and `name`, and a cell with its `size`), and a `<tfoot>` row from
   `listingSummary`, all via `createElement` and `textContent` (never `innerHTML`). `showError(pwd,
-  error)` keeps the breadcrumbs and shows `errorMessage` in a `<p class="error">` instead of the table. Navigation needs no click handlers: a
+  error)` keeps the breadcrumbs and shows `errorMessage` in a `<p class="error">` instead of the table.
+  `showUploadError(pwd, fileName, error)` writes `uploadErrorMessage` into the upload form's output;
+  every show method resets the upload form. Navigation needs no click handlers: a
   directory link changes the hash and `main.js` reacts. The view decides nothing itself, so it stays
   thin and untested on Node; anything that needs a decision (formatting, counts) belongs in a pure,
   tested module. The entry-point module owns
@@ -130,14 +136,17 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
 - `wwwroot/js/api-client.js` — `ApiClient`, the browser's view of the JSON API, with `fetch` injected
   through the constructor so tests pass a fake. `listDirectory(path)` calls `GET /api/dir` and
   `search(path, query)` calls `GET /api/search`; both resolve to the `Entry[]`, and a non-2xx status
-  rejects with an `ApiError` carrying the HTTP status (shared by a private `_getJson`). The module
+  rejects with an `ApiError` carrying the HTTP status (shared by a private `_getJson`).
+  `upload(path, file)` POSTs the file as the multipart `file` part to `/api/file` and resolves to the
+  new `Entry`. The module
   also exports `fileUrl(path)`, the `GET /api/file` link for a download (followed by the browser, not
   fetched). The JSDoc typedef for `Entry` (the client's name for the server's `FileSystemEntry`) lives
   here too.
 - `wwwroot/js/view-helpers.js` — pure functions the view calls, tested in
   `TestProject.Tests/js/view-helpers.test.js`. `directoryHref(path)` is the hash link that lists a
   directory with no search. `errorMessage(pwd, error)` is the wording for a failed load, keyed on the
-  `ApiError` status with a generic fallback (decision 20). `breadcrumbs(pwd)` is the breadcrumb bar: the base, then one
+  `ApiError` status with a generic fallback (decision 20). `uploadErrorMessage(pwd, fileName, error)`
+  is the same for a failed upload (409 name taken, 404 no directory, 400 bad name). `breadcrumbs(pwd)` is the breadcrumb bar: the base, then one
   `{ name, href }` per segment linking to that directory, except the last (the current directory),
   which has no `href`. `listingRows(pwd, entries)` is the row model:
   `.` and `..`

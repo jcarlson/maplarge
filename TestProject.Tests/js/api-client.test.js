@@ -9,8 +9,8 @@ import { ApiClient, ApiError, fileUrl } from "../../wwwroot/js/api-client.js";
  */
 function fakeFetch(status, body) {
     const calls = [];
-    const fetch = async (url) => {
-        calls.push(url);
+    const fetch = async (url, init) => {
+        calls.push(init ? { url, init } : url);
         return new Response(JSON.stringify(body ?? null), {
             status,
             headers: { "Content-Type": "application/json" },
@@ -84,4 +84,34 @@ test("search throws an ApiError carrying the status for a non-OK response", asyn
 
 test("fileUrl points at GET /api/file with the path as a query parameter", () => {
     assert.equal(fileUrl("photos/2024 summer/cat.jpg"), "/api/file?path=photos%2F2024+summer%2Fcat.jpg");
+});
+
+test("upload POSTs the file as the multipart 'file' part to /api/file with the directory as a parameter", async () => {
+    const { fetch, calls } = fakeFetch(201, entries[1]);
+    const file = new File(["hello"], "notes.txt");
+
+    await new ApiClient(fetch).upload("photos/2024 summer", file);
+
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, "/api/file?path=photos%2F2024+summer");
+    assert.equal(calls[0].init.method, "POST");
+    assert.ok(calls[0].init.body instanceof FormData);
+    assert.equal(calls[0].init.body.get("file").name, "notes.txt");
+});
+
+test("upload returns the new entry the server sent", async () => {
+    const { fetch } = fakeFetch(201, entries[1]);
+
+    const result = await new ApiClient(fetch).upload("", new File([""], "notes.txt"));
+
+    assert.deepEqual(result, entries[1]);
+});
+
+test("upload throws an ApiError carrying the status for a non-OK response", async () => {
+    const { fetch } = fakeFetch(409);
+
+    await assert.rejects(
+        () => new ApiClient(fetch).upload("", new File([""], "notes.txt")),
+        (error) => error instanceof ApiError && error.status === 409,
+    );
 });

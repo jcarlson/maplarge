@@ -28,6 +28,25 @@ export function errorMessage(pwd, error) {
 }
 
 /**
+ * What to tell the user when uploading `fileName` into `pwd` failed.
+ * @param {string} pwd The directory the file was going into.
+ * @param {string} fileName The file's own name.
+ * @param {unknown} error What the upload threw.
+ * @returns {string}
+ */
+export function uploadErrorMessage(pwd, fileName, error) {
+    if (error instanceof ApiError) {
+        switch (error.status) {
+            case 409: return `${pwd} already has an entry named ${fileName}.`;
+            case 404: return `There is no directory at ${pwd} to upload into.`;
+            case 400: return `${fileName} is not a name that can be uploaded.`;
+            default: return `The server could not take the upload (status ${error.status}).`;
+        }
+    }
+    return `Something went wrong: ${error instanceof Error ? error.message : String(error)}`;
+}
+
+/**
  * @typedef {object} Crumb One item in the breadcrumb bar.
  * @property {string} name The text: `/` for the base, otherwise the segment.
  * @property {string} [href] That directory's listing; absent for the current directory, which is not a link.

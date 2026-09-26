@@ -62,11 +62,27 @@ export class ApiClient {
     }
 
     /**
-     * GETs `url` and parses the JSON body, or throws an `ApiError` for a non-2xx status.
-     * @param {string} url
+     * Uploads `file` into the directory `path` under its own name. Nothing is ever
+     * overwritten.
+     * @param {string} path Directory path relative to the base.
+     * @param {File} file The file as the browser hands it over.
+     * @returns {Promise<Entry>} The new file as a listing would show it.
+     * @throws {ApiError} 400 if the path escapes the base or the name is not a plain file name,
+     * 404 if the directory does not exist, 409 if that name is already taken.
      */
-    async _getJson(url) {
-        const response = await this._fetch(url);
+    async upload(path, file) {
+        const body = new FormData();
+        body.append("file", file);
+        return this._getJson("/api/file?" + new URLSearchParams({ path }), { method: "POST", body });
+    }
+
+    /**
+     * Requests `url` and parses the JSON body, or throws an `ApiError` for a non-2xx status.
+     * @param {string} url
+     * @param {RequestInit} [init] Anything beyond a plain GET.
+     */
+    async _getJson(url, init) {
+        const response = await this._fetch(url, init);
         if (!response.ok) {
             throw new ApiError(response.status, url);
         }

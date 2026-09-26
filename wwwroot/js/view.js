@@ -1,8 +1,8 @@
-import { breadcrumbs, directoryHref, errorMessage, listingRows, listingSummary, searchRows } from "./view-helpers.js";
+import { breadcrumbs, directoryHref, errorMessage, listingRows, listingSummary, searchRows, uploadErrorMessage } from "./view-helpers.js";
 
 /**
  * The DOM side of the SPA. It renders what the App gives it and reports what the
- * user does (a submitted search) to the App. It copies values onto elements and
+ * user does (a submitted search, a chosen upload) to the App. It copies values onto elements and
  * decides nothing itself, so it stays thin and is left untested on Node (decision
  * 14). Text goes through `textContent`, never `innerHTML`, so file names cannot
  * inject markup.
@@ -14,13 +14,19 @@ export class View {
     /**
      * @param {HTMLElement} container The element whose contents the view replaces.
      * @param {HTMLFormElement} searchForm The form with the `q` input and the clear link.
+     * @param {HTMLFormElement} uploadForm The form with the `file` input and a `status` output.
      */
-    constructor(container, searchForm) {
+    constructor(container, searchForm, uploadForm) {
         this._container = container;
         this._searchForm = searchForm;
+        this._uploadForm = uploadForm;
         searchForm.addEventListener("submit", event => {
             event.preventDefault();
             this._app?.search(searchForm.elements.q.value);
+        });
+        uploadForm.addEventListener("submit", event => {
+            event.preventDefault();
+            this._app?.upload(uploadForm.elements.file.files[0]);
         });
     }
 
@@ -39,7 +45,7 @@ export class View {
      * @param {import("./api-client.js").Entry[]} entries
      */
     showListing(pwd, entries) {
-        this._showSearchForm(pwd, "");
+        this._showForms(pwd, "");
         this._show(pwd, listingRows(pwd, entries), entries);
     }
 
@@ -51,22 +57,35 @@ export class View {
      * @param {import("./api-client.js").Entry[]} entries The matches.
      */
     showSearchResults(pwd, query, entries) {
-        this._showSearchForm(pwd, query);
+        this._showForms(pwd, query);
         this._show(pwd, searchRows(pwd, entries), entries);
     }
 
     /**
-     * Fills the search box with `query` and points the clear link at `pwd` without a
-     * search; the link is shown only while a search is active.
+     * Shows that uploading `fileName` into `pwd` failed, next to the upload form; what
+     * the page shows otherwise is untouched.
+     * @param {string} pwd
+     * @param {string} fileName
+     * @param {unknown} error What the upload threw.
+     */
+    showUploadError(pwd, fileName, error) {
+        this._uploadForm.elements.status.textContent = uploadErrorMessage(pwd, fileName, error);
+    }
+
+    /**
+     * Puts the forms in the state for a fresh page: the search box holds `query` and
+     * the clear link points at `pwd` without a search, shown only while a search is
+     * active; the upload form is reset, clearing its chosen file and any message.
      * @param {string} pwd
      * @param {string} query
      */
-    _showSearchForm(pwd, query) {
+    _showForms(pwd, query) {
         const form = this._searchForm;
         form.elements.q.value = query;
         const clear = form.querySelector("a");
         clear.href = directoryHref(pwd);
         clear.hidden = query === "";
+        this._uploadForm.reset();
     }
 
     /**
@@ -76,7 +95,7 @@ export class View {
      * @param {unknown} error What the load threw.
      */
     showError(pwd, error) {
-        this._showSearchForm(pwd, "");
+        this._showForms(pwd, "");
         const message = document.createElement("p");
         message.className = "error";
         message.textContent = errorMessage(pwd, error);

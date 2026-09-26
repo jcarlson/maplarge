@@ -2,8 +2,9 @@
  * The file browser application: what the URL means and what happens when the user
  * acts. It reacts to navigation by loading what the URL names, a directory's
  * listing or a search within it, and handing it to the view; a search typed by the
- * user becomes a new URL state. The router owns the location and the view owns the
- * DOM; App touches neither, so it is tested with fakes for all three dependencies.
+ * user becomes a new URL state, and a chosen file is uploaded into the current
+ * directory. The router owns the location and the view owns the DOM; App touches
+ * neither, so it is tested with fakes for all three dependencies.
  */
 export class App {
     /**
@@ -60,6 +61,23 @@ export class App {
         const q = text.trim();
         this._router.go({ query: q ? { q } : {} });
     }
+
+    /**
+     * The user chose a file to upload. It goes into the directory the URL names now,
+     * and the current view is loaded again so the new file appears in it. A failure,
+     * such as a name already taken, is reported next to the form; the table stays.
+     * @param {File} file
+     */
+    async upload(file) {
+        const state = this._router.current();
+        try {
+            await this._api.upload(state.pwd, file);
+        } catch (error) {
+            this._view.showUploadError(state.pwd, file.name, error);
+            return;
+        }
+        await this.navigate(state);
+    }
 }
 
 /**
@@ -68,4 +86,5 @@ export class App {
  * @property {(pwd: string, entries: import("./api-client.js").Entry[]) => void} showListing
  * @property {(pwd: string, query: string, entries: import("./api-client.js").Entry[]) => void} showSearchResults
  * @property {(pwd: string, error: unknown) => void} showError
+ * @property {(pwd: string, fileName: string, error: unknown) => void} showUploadError
  */
