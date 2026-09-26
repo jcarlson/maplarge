@@ -27,6 +27,31 @@ namespace TestProject.Services {
         }
 
         /// <summary>
+        /// Finds every file and directory anywhere under the base whose name contains
+        /// <paramref name="query"/>, ignoring case. Only the entry's own name is matched, never
+        /// the directories above it, so a query of "photos" finds the "photos" directory but not
+        /// the files inside it. Subdirectories that cannot be read are skipped rather than
+        /// failing the whole search.
+        /// </summary>
+        /// <exception cref="ArgumentException">The query is empty or whitespace.</exception>
+        public Listing Search(string query) {
+            if (string.IsNullOrWhiteSpace(query)) {
+                throw new ArgumentException("Search query must not be empty.", nameof(query));
+            }
+
+            var options = new EnumerationOptions {
+                RecurseSubdirectories = true,
+                IgnoreInaccessible = true,
+                // Show the same entries a listing would: the defaults skip hidden and system files.
+                AttributesToSkip = 0,
+            };
+            var matches = new DirectoryInfo(_paths.BaseDirectory)
+                .EnumerateFileSystemInfos("*", options)
+                .Where(info => info.Name.Contains(query, StringComparison.OrdinalIgnoreCase));
+            return new Listing(matches.Select(info => Entry.From(_paths.BaseDirectory, info)));
+        }
+
+        /// <summary>
         /// Describes the file at <paramref name="path"/>, given relative to the base. No handle is
         /// opened; the caller decides how to read the file, e.g. by handing
         /// <see cref="FileInfo.FullName"/> to the framework so it owns the open and close.

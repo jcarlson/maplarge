@@ -195,3 +195,30 @@ upload (to disk above 64 KB) before the action runs, which costs a second write 
 hand-rolled `MultipartReader` streaming path is several times the code; it is the obvious change to make
 if upload throughput turns out to matter. With this third endpoint the `ArgumentException` → 400 mapping
 now appears in three actions, which is the threshold decision 9 set for moving it into an exception filter.
+
+## 13. Search is a recursive, case-insensitive name match served as a `Listing` from `/api/search`
+
+**Decision:** `FileSystemService.Search(query)` walks the whole base directory recursively and returns a
+`Listing` of every file and directory whose *own name* contains the query, compared ordinally and ignoring
+case; the directories above an entry are never matched, so `photos` finds the `photos` directory but not
+`photos/cat.jpg`. The walk uses `DirectoryInfo.EnumerateFileSystemInfos("*", EnumerationOptions)` with
+`RecurseSubdirectories`, `IgnoreInaccessible` (an unreadable subdirectory is skipped instead of aborting the
+search) and `AttributesToSkip = 0` (so hidden and system entries appear exactly as they do in a directory
+listing). Matching is done in C# with `string.Contains`, not by passing `*query*` as the search pattern. A
+blank query is an `ArgumentException`. `SearchController` exposes it as `GET /api/search?q=<text>`: 200 with
+the listing, 400 for a missing or blank `q`; the search always starts at the base, and there is no `path`
+parameter yet.
+
+**Why:** Matching in C# rather than via the enumeration's search pattern avoids having to escape `*` and `?`
+in user input and keeps the match rule (substring, ordinal, case-insensitive) in one obvious line; the
+traversal, not the comparison, is the cost of a search, so nothing is lost. Case-insensitivity is chosen
+because a user typing into a search box does not think about case, and ordinal comparison keeps the result
+platform-independent. Name-only matching is what was asked for and matches how people search a file
+browser; it also means a result set is not swamped by every descendant of a directory whose name happens to
+match. Reusing `Listing` gives search results the same ordering, sizes and total as a directory listing for
+free, which decision 10 planned for, and lets the SPA render both views with one code path. Blank queries
+are rejected rather than returning everything under the base: such a response could be enormous and is
+never what a search box means. Scoping a search to a subdirectory is a natural next step and would be a
+`path` parameter resolved through `PathResolver`; it is left out until the UI needs it. Consistent with
+decision 3, symbolic links are neither detected nor special-cased, so a directory link that forms a cycle
+would be followed by the recursion; handling that belongs with the wider link decision, not here.

@@ -81,6 +81,9 @@ Unit tests (xUnit) live in `TestProject.Tests/`. Run them with `dotnet test`, or
   `POST /api/file?path=` with a multipart `file` part writes the upload into the directory `path` via
   `FileSystemService.WriteFileAsync`, never overwriting: 201 with the new `Entry` and a `Location` header,
   400 for an escaping path or a non-plain file name, 404 if the directory is missing, 409 if the name is taken.
+- `Controllers/SearchController.cs` — `GET /api/search?q=` finds files and folders anywhere under the base
+  whose name contains `q` (case-insensitive) via `FileSystemService.Search`, returned as a JSON `Listing`
+  (400 if `q` is missing or blank).
 - `wwwroot/index.html` — placeholder page, launched by default (`launchUrl: index.html`).
 - `Models/Listing.cs` — the API's view of a set of entries: `Listing` (built from `Entry` values, exposing
   `Entries` and `TotalSize`) and the `Entry(Path, IsDirectory, Size)` record, whose static `From` builds one
@@ -88,7 +91,8 @@ Unit tests (xUnit) live in `TestProject.Tests/`. Run them with `dotnet test`, or
   base-relative, directories first, then files, each in ordinal order; `Size` is bytes for a file, `null` for
   a directory. `Listing` is testable without a filesystem.
 - `Services/FileSystemService.cs` — the operations on the configured base directory (`ListDirectory`,
-  `GetFileInfo`, `WriteFileAsync`), taking paths relative to the base. `ListDirectory` returns a `Listing`;
+  `Search`, `GetFileInfo`, `WriteFileAsync`), taking paths relative to the base. `ListDirectory` and
+  `Search` return a `Listing`; `Search` walks the whole base recursively and matches the entry name only.
   `WriteFileAsync` creates a new file (never overwrites) and returns its `Entry`. Constructed in
   `Program.cs` from `FileBrowser:BaseDirectory` and registered as a singleton.
 - `Services/EntryExistsException.cs` — thrown by the service when a create would clash with an existing

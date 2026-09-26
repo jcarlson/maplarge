@@ -88,6 +88,63 @@ namespace TestProject.Tests {
         }
 
         [Fact]
+        public void Search_FindsMatchesAtEveryDepthOrderedLikeAListing() {
+            File.WriteAllText(Path.Combine(_baseDirectory, "cat.txt"), "12");
+            Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos", "cats"));
+            File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cats", "tabby-cat.jpg"), "123");
+            File.WriteAllText(Path.Combine(_baseDirectory, "photos", "dog.jpg"), "");
+
+            var listing = new FileSystemService(_baseDirectory).Search("cat");
+
+            Assert.Equal(
+                new[] {
+                    new Entry(Path.Combine("photos", "cats"), IsDirectory: true, Size: null),
+                    new Entry("cat.txt", IsDirectory: false, Size: 2),
+                    new Entry(Path.Combine("photos", "cats", "tabby-cat.jpg"), IsDirectory: false, Size: 3),
+                },
+                listing.Entries);
+            Assert.Equal(5, listing.TotalSize);
+        }
+
+        [Fact]
+        public void Search_IgnoresCase() {
+            File.WriteAllText(Path.Combine(_baseDirectory, "README.md"), "");
+
+            var listing = new FileSystemService(_baseDirectory).Search("readme");
+
+            Assert.Equal(new[] { new Entry("README.md", IsDirectory: false, Size: 0) }, listing.Entries);
+        }
+
+        [Fact]
+        public void Search_MatchesTheEntryNameOnlyNotItsParentDirectories() {
+            Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
+            File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg"), "");
+
+            var listing = new FileSystemService(_baseDirectory).Search("photos");
+
+            Assert.Equal(new[] { new Entry("photos", IsDirectory: true, Size: null) }, listing.Entries);
+        }
+
+        [Fact]
+        public void Search_NoMatches_ReturnsEmptyListing() {
+            File.WriteAllText(Path.Combine(_baseDirectory, "dog.jpg"), "");
+
+            var listing = new FileSystemService(_baseDirectory).Search("cat");
+
+            Assert.Empty(listing.Entries);
+            Assert.Equal(0, listing.TotalSize);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public void Search_BlankQuery_Throws(string query) {
+            var service = new FileSystemService(_baseDirectory);
+
+            Assert.Throws<ArgumentException>(() => service.Search(query));
+        }
+
+        [Fact]
         public void GetFileInfo_ReturnsInfoForExistingFile() {
             File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "hello");
 
