@@ -63,7 +63,7 @@ dotnet watch run                  # hot reload during development
 dotnet run --launch-profile TestProject   # same as `dotnet run` (profile from Properties/launchSettings.json)
 ```
 
-There are no tests yet. If a test project is added, use `dotnet test` and
+Unit tests (xUnit) live in `TestProject.Tests/`. Run them with `dotnet test`, or use
 `dotnet test --filter "FullyQualifiedName~ClassName.MethodName"` to run a single test.
 
 
@@ -75,8 +75,13 @@ There are no tests yet. If a test project is added, use `dotnet test` and
 - `Controllers/TestController.cs` — placeholder API controller (`GET /Test` returns a string). Attribute-routed
   via `[Route("[controller]")]`. Replace or delete it; it exists only as a starting point.
 - `wwwroot/index.html` — placeholder page, launched by default (`launchUrl: index.html`).
-- `appsettings.json` — the single config file (logging only so far); the configurable home directory belongs
-  here (bound via `IConfiguration`/options) or in an environment variable.
+- `Services/DirectoryLister.cs` — lists the contents of the configured base directory as paths relative to
+  it. Constructed in `Program.cs` from `FileBrowser:BaseDirectory` and registered as a singleton.
+- `TestProject.Tests/` — xUnit test project, excluded from the web project's default source globs via
+  `DefaultItemExcludes` in `TestProject.csproj`.
+- `appsettings.json` — the single config file. `FileBrowser:BaseDirectory` is the browsable root (relative
+  values resolve against the content root); override with the `FileBrowser__BaseDirectory` environment
+  variable.
 - `Properties/launchSettings.json` — one `TestProject` profile, HTTP only.
 - `DECISIONS.md` — numbered log of architecture decisions with rationale. **Append an entry whenever a
   non-obvious design choice is made** (scope cuts, API shape, data model, performance trade-offs). Reviewers

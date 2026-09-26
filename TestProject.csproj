@@ -4,6 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- The test project lives in a subfolder; keep its sources out of this project's default globs. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);TestProject.Tests/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
