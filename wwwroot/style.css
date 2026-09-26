@@ -1,0 +1,190 @@
+/* Minimal styling: a readable column, quiet tools, and a table that reads like a listing. */
+
+:root {
+    --ink: #1f2328;
+    --muted: #6b7280;
+    --line: #e2e5e9;
+    --panel: #f6f7f9;
+    --accent: #1d5fd1;
+    --danger: #b42318;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    max-width: 60rem;
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--ink);
+    background: #fff;
+}
+
+h1 {
+    margin: 0 0 1.5rem;
+    font-size: 1.6rem;
+    font-weight: 600;
+}
+
+h2 {
+    margin: 0 0 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Tools: the search and upload panels side by side, stacking on narrow screens. */
+
+.tools {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.tools section {
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--muted);
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+input[type="search"] {
+    flex: 1 1 10rem;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font: inherit;
+}
+
+input[type="file"] {
+    flex: 1 1 10rem;
+    font: inherit;
+}
+
+button {
+    padding: 0.4rem 0.9rem;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    background: var(--accent);
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+}
+
+button:hover {
+    filter: brightness(1.1);
+}
+
+output {
+    display: block;
+    margin-top: 0.5rem;
+    color: var(--danger);
+}
+
+output:empty {
+    display: none;
+}
+
+/* Breadcrumbs: the current folder in bold, ancestors as links, separators muted. */
+
+nav {
+    margin-bottom: 0.75rem;
+    font-size: 1.05rem;
+    color: var(--muted);
+}
+
+nav a,
+nav span {
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+}
+
+nav a:hover {
+    background: var(--panel);
+    text-decoration: none;
+}
+
+nav span {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+/* Listing table: a hairline between rows, room in the cells, sizes on the right. */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+}
+
+th,
+td {
+    padding: 0.5rem 0.9rem;
+    text-align: left;
+}
+
+th:last-child,
+td:last-child {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+thead th {
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+}
+
+tbody td {
+    border-bottom: 1px solid var(--line);
+}
+
+tbody tr:hover {
+    background: var(--panel);
+}
+
+tfoot td {
+    color: var(--muted);
+    background: var(--panel);
+}
+
+/* Errors */
+
+.error {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--danger);
+    border-radius: 6px;
+    color: var(--danger);
+}

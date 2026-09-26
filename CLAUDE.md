@@ -89,11 +89,16 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   directory `path` (the whole base when omitted) whose name contains `q` (case-insensitive) via
   `FileSystemService.Search`, returned as a JSON array of `FileSystemEntry` with base-relative paths (400
   if `q` is missing or blank or `path` escapes the base, 404 if the directory is missing).
-- `wwwroot/index.html` — the SPA's page, served at `/`: the
+- `wwwroot/index.html` — the SPA's page, served at `/`: the stylesheet link and the
   `<script type="module" src="js/main.js">` tag in the head (module scripts are deferred, so it runs
-  after the DOM is parsed), the `<form id="search">` with its `q` input, submit button and clear link,
-  the `<form id="upload">` with its required `file` input, submit button and `status` output, and the
-  `<main id="listing">` container the view renders into.
+  after the DOM is parsed), a title, then two labelled sections: the `<form id="search">` with its `q`
+  input, submit button and clear link, and the `<form id="upload">` with its required `file` input,
+  submit button and `status` output, followed by the `<main id="listing">` container the view renders
+  into. The ids and names are what `main.js` and `View` look up; the rest is layout.
+- `wwwroot/style.css` — the only stylesheet: a readable single column, the two tool panels in a grid,
+  breadcrumbs with the current folder in bold, and the listing table with padded cells and the size
+  column right-aligned in tabular figures. Selectors use the elements and the `.error` class the view
+  already produces, so styling never touches JavaScript.
 - `wwwroot/js/main.js` — the entry point, wiring only: builds the `ApiClient` over the window's `fetch`,
   the `Router` over `window`, the `View` over the container and the two forms, and the `App` over all
   three, then awaits `app.start()`. Untested, per decision 14.

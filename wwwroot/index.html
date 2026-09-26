@@ -1,21 +1,40 @@
 ﻿<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>File Browser</title>
+    <link rel="stylesheet" href="style.css" />
     <script type="module" src="js/main.js"></script>
 </head>
 <body>
-    <form id="search">
-        <input type="search" name="q" placeholder="Search this folder" />
-        <button type="submit">Search</button>
-        <a id="clear-search" href="#/" hidden>Clear</a>
-    </form>
-    <form id="upload">
-        <input type="file" name="file" required />
-        <button type="submit">Upload</button>
-        <output name="status"></output>
-    </form>
+    <header>
+        <h1>File Browser</h1>
+    </header>
+    <div class="tools">
+        <section>
+            <h2>Search</h2>
+            <form id="search">
+                <label for="q">Find files and folders below the current one</label>
+                <div class="row">
+                    <input id="q" type="search" name="q" placeholder="Name contains…" />
+                    <button type="submit">Search</button>
+                    <a id="clear-search" href="#/" hidden>Clear</a>
+                </div>
+            </form>
+        </section>
+        <section>
+            <h2>Upload</h2>
+            <form id="upload">
+                <label for="file">Add a file to the current folder</label>
+                <div class="row">
+                    <input id="file" type="file" name="file" required />
+                    <button type="submit">Upload</button>
+                </div>
+                <output name="status"></output>
+            </form>
+        </section>
+    </div>
     <main id="listing"></main>
 </body>
 </html>
