@@ -144,3 +144,24 @@ constructed for any path, so `Listing` is unit-tested without touching the disk.
 so the client can render the array as given: the SPA has no test harness (adding one would drag in the build
 tooling the exercise steers away from), so logic is kept in C# where it is tested, and only one display order
 is planned. Recursive directory sizes (`du`-style) are out of scope; a directory listing behaves like `ls`.
+
+## 11. Entries carry a file size; `Listing` totals them; reading the disk moves out of `Listing`
+
+**Decision:** `Entry` gains a third positional property, `long? Size`: a file's length in bytes, `null` for a
+directory. `Listing` gains `TotalSize`, the sum of the sizes of the entries it holds (directories contribute
+nothing, an empty listing totals zero). `GET /api/dir` now serialises as
+`{"entries":[{"path":"photos","isDirectory":true,"size":null},{"path":"notes.txt","isDirectory":false,"size":5}],"totalSize":5}`.
+To make room for the size, the mapping from `FileSystemInfo` moves out of the `Listing` constructor into a
+static `Entry.From(baseDirectory, info)`; `Listing` now takes `IEnumerable<Entry>` and only orders and totals.
+`FileSystemService.ListDirectory` composes the two.
+
+**Why:** A file's size has to come from the disk (`FileInfo.Length` throws for a path that does not exist),
+which breaks the property decision 10 relied on for testing `Listing` without touching the disk. Rather than
+give up that property, the class is split along the seam that now exists: `Entry.From` is the one place that
+reads a `FileSystemInfo`, tested against real temp files, and `Listing` is pure ordering and aggregation over
+`Entry` values, tested with hand-built entries. `Size` is `null` for a directory rather than zero so the
+client can tell "no size" from "empty" without consulting `isDirectory`, and so a recursive directory total
+can be added later without changing the meaning of an existing value. `TotalSize` is a `long` computed once
+in the constructor; it counts only the files directly in the listing, matching decision 10's `ls`-not-`du`
+scope. No extra I/O is incurred: `EnumerateFileSystemInfos` already populates the length of each `FileInfo`
+it yields.

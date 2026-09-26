@@ -27,7 +27,10 @@ namespace TestProject.Tests {
             var listing = new FileSystemService(_baseDirectory).ListDirectory();
 
             Assert.Equal(
-                new[] { new Entry("photos", IsDirectory: true), new Entry("notes.txt", IsDirectory: false) },
+                new[] {
+                    new Entry("photos", IsDirectory: true, Size: null),
+                    new Entry("notes.txt", IsDirectory: false, Size: 5),
+                },
                 listing.Entries);
         }
 
@@ -37,15 +40,15 @@ namespace TestProject.Tests {
         [InlineData("photos/")]
         public void ListDirectory_Subdirectory_ReturnsEntriesRelativeToBase(string path) {
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos", "2024"));
-            File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg"), "");
+            File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg"), "meow");
             File.WriteAllText(Path.Combine(_baseDirectory, "unrelated.txt"), "");
 
             var listing = new FileSystemService(_baseDirectory).ListDirectory(path);
 
             Assert.Equal(
                 new[] {
-                    new Entry(Path.Combine("photos", "2024"), IsDirectory: true),
-                    new Entry(Path.Combine("photos", "cat.jpg"), IsDirectory: false),
+                    new Entry(Path.Combine("photos", "2024"), IsDirectory: true, Size: null),
+                    new Entry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 4),
                 },
                 listing.Entries);
         }
@@ -69,6 +72,19 @@ namespace TestProject.Tests {
             var listing = new FileSystemService(_baseDirectory).ListDirectory();
 
             Assert.Empty(listing.Entries);
+            Assert.Equal(0, listing.TotalSize);
+        }
+
+        [Fact]
+        public void ListDirectory_TotalsSizesOfFilesInThatDirectoryOnly() {
+            File.WriteAllText(Path.Combine(_baseDirectory, "a.txt"), "12345");
+            File.WriteAllText(Path.Combine(_baseDirectory, "b.txt"), "678");
+            Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
+            File.WriteAllText(Path.Combine(_baseDirectory, "photos", "nested.jpg"), "not counted");
+
+            var listing = new FileSystemService(_baseDirectory).ListDirectory();
+
+            Assert.Equal(8, listing.TotalSize);
         }
 
         [Fact]
@@ -125,7 +141,7 @@ namespace TestProject.Tests {
 
             var listing = new FileSystemService(unnormalized).ListDirectory();
 
-            Assert.Equal(new[] { new Entry("file.txt", IsDirectory: false) }, listing.Entries);
+            Assert.Equal(new[] { new Entry("file.txt", IsDirectory: false, Size: 0) }, listing.Entries);
         }
 
         [Fact]

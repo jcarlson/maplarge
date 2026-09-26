@@ -25,7 +25,7 @@ namespace TestProject.Tests {
 
         [Fact]
         public void List_DefaultPath_ReturnsOkWithBaseListing() {
-            File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "");
+            File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "hello");
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
 
             var result = _controller.List();
@@ -33,8 +33,12 @@ namespace TestProject.Tests {
             var ok = Assert.IsType<OkObjectResult>(result.Result);
             var listing = Assert.IsType<Listing>(ok.Value);
             Assert.Equal(
-                new[] { new Entry("photos", IsDirectory: true), new Entry("notes.txt", IsDirectory: false) },
+                new[] {
+                    new Entry("photos", IsDirectory: true, Size: null),
+                    new Entry("notes.txt", IsDirectory: false, Size: 5),
+                },
                 listing.Entries);
+            Assert.Equal(5, listing.TotalSize);
         }
 
         [Fact]
@@ -46,7 +50,7 @@ namespace TestProject.Tests {
 
             var ok = Assert.IsType<OkObjectResult>(result.Result);
             var listing = Assert.IsType<Listing>(ok.Value);
-            Assert.Equal(new[] { new Entry(Path.Combine("photos", "cat.jpg"), IsDirectory: false) }, listing.Entries);
+            Assert.Equal(new[] { new Entry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 0) }, listing.Entries);
         }
 
         [Fact]

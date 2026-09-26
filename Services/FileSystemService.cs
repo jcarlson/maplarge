@@ -23,7 +23,7 @@ namespace TestProject.Services {
         /// <exception cref="DirectoryNotFoundException">The directory does not exist under the base.</exception>
         public Listing ListDirectory(string path = "") {
             var directory = new DirectoryInfo(_paths.Resolve(path));
-            return new Listing(_paths.BaseDirectory, directory.EnumerateFileSystemInfos());
+            return new Listing(directory.EnumerateFileSystemInfos().Select(info => Entry.From(_paths.BaseDirectory, info)));
         }
 
         /// <summary>

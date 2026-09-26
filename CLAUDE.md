@@ -79,9 +79,11 @@ Unit tests (xUnit) live in `TestProject.Tests/`. Run them with `dotnet test`, or
   as a physical-file result: attachment named after the file, MIME type from the extension, range
   requests enabled (400 if the path escapes the base or is missing, 404 if there is no file there).
 - `wwwroot/index.html` — placeholder page, launched by default (`launchUrl: index.html`).
-- `Models/Listing.cs` — the API's view of a set of entries: `Listing` (built from the base directory and
-  `FileSystemInfo` objects, exposing `Entries`) and the `Entry(Path, IsDirectory)` record. Entries are
-  base-relative, directories first, then files, each in ordinal order. Testable without a filesystem.
+- `Models/Listing.cs` — the API's view of a set of entries: `Listing` (built from `Entry` values, exposing
+  `Entries` and `TotalSize`) and the `Entry(Path, IsDirectory, Size)` record, whose static `From` builds one
+  from the base directory and a `FileSystemInfo` (the only place a `FileSystemInfo` is read). Entries are
+  base-relative, directories first, then files, each in ordinal order; `Size` is bytes for a file, `null` for
+  a directory. `Listing` is testable without a filesystem.
 - `Services/FileSystemService.cs` — the operations on the configured base directory (`ListDirectory`,
   `GetFileInfo`), taking paths relative to the base. `ListDirectory` returns a `Listing`. Constructed in
   `Program.cs` from `FileBrowser:BaseDirectory` and registered as a singleton.
