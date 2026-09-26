@@ -6,17 +6,17 @@
  */
 
 /**
- * @typedef {object} State
+ * @typedef {object} UrlState
  * @property {string} pwd Directory being viewed, always with a leading `/`; `/` is the base.
  * @property {Record<string, string>} query Every `key=value` pair after the `?`; `{}` when there are none.
  */
 
 /**
- * Reads a `State` out of a fragment such as `location.hash`. Tolerant of what a
+ * Reads a `UrlState` out of a fragment such as `location.hash`. Tolerant of what a
  * hand-edited URL can contain: a missing `#` or leading `/`, repeated or trailing
  * slashes, and percent-escapes that do not decode (kept as typed).
  * @param {string} hash
- * @returns {State}
+ * @returns {UrlState}
  */
 export function parseState(hash) {
     const fragment = hash.startsWith("#") ? hash.slice(1) : hash;
@@ -30,9 +30,9 @@ export function parseState(hash) {
 }
 
 /**
- * Writes a `State` as a fragment, ready to assign to `location.hash`. The base
+ * Writes a `UrlState` as a fragment, ready to assign to `location.hash`. The base
  * directory with no query is `#/`; the `?` is left out when `query` is empty.
- * @param {State} state
+ * @param {UrlState} state
  * @returns {string}
  */
 export function serializeState({ pwd, query }) {

@@ -254,11 +254,11 @@ built-in runner sufficient: there is no need for a simulated DOM, and the split 
 controllers and plain service classes on the server, the same approach to testability taken on the C#
 side throughout this project.
 
-## 15. UI state lives in the URL fragment as `#/path/to/dir?key=value`, converted by a pure `state` module
+## 15. UI state lives in the URL fragment as `#/path/to/dir?key=value`, converted by a pure `url-state` module
 
 **Decision:** The SPA keeps its state in the URL fragment rather than in the path via the History API.
 The fragment reads like a path plus a query, `#/photos/2024?q=summer`: the directory being viewed, then
-any number of generic `key=value` pairs. `wwwroot/js/state.js` converts between that string and a plain
+any number of generic `key=value` pairs. `wwwroot/js/url-state.js` converts between that string and a plain
 `{ pwd, query }` object in both directions (`parseState`, `serializeState`) and never touches the DOM;
 reading and assigning `location.hash` is left to the caller. `pwd` always carries a leading `/` and is
 `/` for the base; `query` is an object of every pair after the `?`, so the module does not know what

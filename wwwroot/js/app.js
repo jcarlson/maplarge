@@ -4,7 +4,7 @@
  * and translates each change into a `navigate` call.
  */
 export class App {
-    /** @type {import("./state.js").State | undefined} */
+    /** @type {import("./url-state.js").UrlState | undefined} */
     state;
 
     /** @type {import("./api-client.js").Listing | undefined} */
@@ -19,7 +19,7 @@ export class App {
      * Responds to a navigation: `state` becomes the current state and the listing
      * for its directory is loaded. The server accepts `pwd` as is, since a leading
      * slash means the base directory to it too.
-     * @param {import("./state.js").State} state The parsed URL state to move to.
+     * @param {import("./url-state.js").UrlState} state The parsed URL state to move to.
      */
     async navigate(state) {
         this.state = state;

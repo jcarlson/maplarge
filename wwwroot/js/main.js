@@ -5,7 +5,7 @@
  */
 import { ApiClient } from "./api-client.js";
 import { App } from "./app.js";
-import { parseState } from "./state.js";
+import { parseState } from "./url-state.js";
 
 // fetch must be called on the window; passed bare, the client would call it on itself.
 const app = new App(new ApiClient(fetch.bind(globalThis)));

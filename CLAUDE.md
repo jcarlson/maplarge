@@ -104,10 +104,10 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   through the constructor so tests pass a fake. `listDirectory(path)` calls `GET /api/dir` and resolves
   to the `Listing`; a non-2xx status rejects with an `ApiError` carrying the HTTP status. The JSDoc
   typedefs for `Listing` and `Entry` live here too.
-- `wwwroot/js/state.js` — the UI state `{ pwd, query }` and its URL-fragment form
+- `wwwroot/js/url-state.js` — the `UrlState` `{ pwd, query }` and its URL-fragment form
   `#/path/to/dir?key=value` (decision 15): `parseState(hash)` and `serializeState(state)`, pure string
   logic with no DOM access. `pwd` always starts with `/`; `query` is a generic object of the pairs after
-  the `?`. Tested in both directions in `TestProject.Tests/js/state.test.js`.
+  the `?`. Tested in both directions in `TestProject.Tests/js/url-state.test.js`.
 - `Models/Listing.cs` — the API's view of a set of entries: `Listing` (built from `Entry` values, exposing
   `Entries` and `TotalSize`) and the `Entry(Path, IsDirectory, Size)` record, whose static `From` builds one
   from the base directory and a `FileSystemInfo` (the only place a `FileSystemInfo` is read). Entries are
