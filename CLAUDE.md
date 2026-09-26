@@ -109,6 +109,8 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   form. `showListing(pwd, entries)` and `showSearchResults(pwd, query, entries)` fill the search box
   (empty for a listing, the query for results, so a deep link arrives filled in), point the clear link
   at `directoryHref(pwd)` and show it only during a search, then replace the container's contents with a
+  `<nav>` of `breadcrumbs` (the base, then each segment, separated by `›`; ancestors are links, the
+  current directory plain text) and a
   `<table>`: a `<thead>` with Name and Size, a `<tbody>` with one row per `listingRows` or `searchRows`
   row (a link with its `href` and `name`, and a cell with its `size`), and a `<tfoot>` row from
   `listingSummary`, all via `createElement` and `textContent` (never `innerHTML`). Navigation needs no click handlers: a
@@ -126,7 +128,10 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   here too.
 - `wwwroot/js/view-helpers.js` — pure functions the view calls, tested in
   `TestProject.Tests/js/view-helpers.test.js`. `directoryHref(path)` is the hash link that lists a
-  directory with no search. `listingRows(pwd, entries)` is the row model: `.` and `..`
+  directory with no search. `breadcrumbs(pwd)` is the breadcrumb bar: the base, then one
+  `{ name, href }` per segment linking to that directory, except the last (the current directory),
+  which has no `href`. `listingRows(pwd, entries)` is the row model:
+  `.` and `..`
   (via `parentPath`; the base is its own parent) then one `{ name, href, size }` per entry, built from
   the per-entry helpers (decision 16). `searchRows(pwd, entries)` is the row model for search results:
   no `.` or `..`, and each match named by its path below the searched directory, since matches sit at

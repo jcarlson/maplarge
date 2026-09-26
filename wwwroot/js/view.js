@@ -1,4 +1,4 @@
-import { directoryHref, listingRows, listingSummary, searchRows } from "./view-helpers.js";
+import { breadcrumbs, directoryHref, listingRows, listingSummary, searchRows } from "./view-helpers.js";
 
 /**
  * Renders a listing into a container element. This is the DOM side of the SPA:
@@ -23,7 +23,7 @@ export class View {
      */
     showListing(pwd, entries) {
         this._showSearchForm(pwd, "");
-        this._showTable(listingRows(pwd, entries), entries);
+        this._show(pwd, listingRows(pwd, entries), entries);
     }
 
     /**
@@ -35,7 +35,7 @@ export class View {
      */
     showSearchResults(pwd, query, entries) {
         this._showSearchForm(pwd, query);
-        this._showTable(searchRows(pwd, entries), entries);
+        this._show(pwd, searchRows(pwd, entries), entries);
     }
 
     /**
@@ -53,11 +53,26 @@ export class View {
     }
 
     /**
-     * Replaces the container with a table of `rows`, summarised in its footer.
+     * Replaces the container with the breadcrumb bar for `pwd` and a table of `rows`,
+     * summarised in its footer.
+     * @param {string} pwd
      * @param {import("./view-helpers.js").Row[]} rows
      * @param {import("./api-client.js").Entry[]} entries The entries the rows came from.
      */
-    _showTable(rows, entries) {
+    _show(pwd, rows, entries) {
+        const nav = document.createElement("nav");
+        breadcrumbs(pwd).forEach(({ name, href }, index) => {
+            if (index > 0) {
+                nav.append(" \u203a ");
+            }
+            const crumb = document.createElement(href ? "a" : "span");
+            if (href) {
+                crumb.href = href;
+            }
+            crumb.textContent = name;
+            nav.append(crumb);
+        });
+
         const body = document.createElement("tbody");
         for (const { name, href, size } of rows) {
             const link = document.createElement("a");
@@ -73,7 +88,7 @@ export class View {
             body,
             section("tfoot", row("td", [counts, totalSize])),
         );
-        this._container.replaceChildren(table);
+        this._container.replaceChildren(nav, table);
     }
 }
 

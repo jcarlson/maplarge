@@ -1,9 +1,21 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { directoryHref, entryHref, entryName, entrySize, formatSize, listingRows, listingSummary, parentPath, searchRows } from "../../wwwroot/js/view-helpers.js";
+import { breadcrumbs, directoryHref, entryHref, entryName, entrySize, formatSize, listingRows, listingSummary, parentPath, searchRows } from "../../wwwroot/js/view-helpers.js";
 
 const directory = { path: "photos/2024 summer", isDirectory: true, size: null };
 const file = { path: "photos/cat.jpg", isDirectory: false, size: 12 };
+
+test("breadcrumbs start at the base, link every ancestor, and leave the current directory unlinked", () => {
+    assert.deepEqual(breadcrumbs("/photos/2024 summer"), [
+        { name: "/", href: "#/" },
+        { name: "photos", href: "#/photos" },
+        { name: "2024 summer" },
+    ]);
+});
+
+test("breadcrumbs for the base are the base alone, unlinked", () => {
+    assert.deepEqual(breadcrumbs("/"), [{ name: "/" }]);
+});
 
 test("directoryHref links to a directory's listing with no search", () => {
     assert.equal(directoryHref("/photos/2024 summer"), "#/photos/2024%20summer");

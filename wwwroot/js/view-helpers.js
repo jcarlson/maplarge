@@ -9,6 +9,30 @@ import { serializeState } from "./url-state.js";
  */
 
 /**
+ * @typedef {object} Crumb One item in the breadcrumb bar.
+ * @property {string} name The text: `/` for the base, otherwise the segment.
+ * @property {string} [href] That directory's listing; absent for the current directory, which is not a link.
+ */
+
+/**
+ * The breadcrumb bar for a `pwd`: the base first, then one crumb per segment. Every
+ * ancestor links to its listing; the last crumb is the current directory and has no
+ * link, since the page already shows it.
+ * @param {string} pwd The current directory, as `UrlState.pwd`.
+ * @returns {Crumb[]}
+ */
+export function breadcrumbs(pwd) {
+    const crumbs = [{ name: "/", href: directoryHref("/") }];
+    let path = "";
+    for (const segment of pwd.split("/").filter(Boolean)) {
+        path += "/" + segment;
+        crumbs.push({ name: segment, href: directoryHref(path) });
+    }
+    delete crumbs[crumbs.length - 1].href;
+    return crumbs;
+}
+
+/**
  * The rows for a directory listing, `ls -a` style: `.` (the directory itself) and
  * `..` (its parent; the base's parent is the base) first, then one row per entry.
  * @param {string} pwd The directory being listed, as `UrlState.pwd`.
