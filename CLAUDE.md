@@ -92,14 +92,14 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   `<script type="module" src="js/main.js">` tag in the head (module scripts are deferred, so it runs
   after the DOM is parsed) and the `<main id="listing">` container the view renders into.
 - `wwwroot/js/main.js` — the entry point and the only module that reads the browser's location: it
-  builds the `ApiClient` over the window's `fetch` and the `ListingView` over the container, constructs
+  builds the `ApiClient` over the window's `fetch` and the `View` over the container, constructs
   the `App` with both, and parses `location.hash` with `parseState` into a `navigate` call, once on load
   and on every `hashchange`. Deliberately thin and untested, per decision 14.
 - `wwwroot/js/app.js` — the `App` class, the root of the SPA, constructed with an `ApiClient` and a
   view. `navigate(urlState)` loads the `Listing` for the state's `pwd` (the server accepts the leading
   slash) and passes it to the view's `showListing`. It touches neither the location nor the DOM and
   stores nothing: the hash is the source of truth for state. Tested with fakes for both dependencies.
-- `wwwroot/js/listing-view.js` — `ListingView`, the DOM side: constructed with a container element,
+- `wwwroot/js/view.js` — `View`, the DOM side: constructed with a container element,
   `showListing(listing)` replaces its contents with one element per entry, via `createElement` and
   `textContent` (never `innerHTML`). It decides nothing itself, so it stays thin and untested on Node;
   anything that needs a decision (formatting, links, counts) belongs in a pure, tested module. The entry-point module owns

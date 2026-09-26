@@ -4,7 +4,7 @@
  * stays thin and is left untested on Node (decision 14). Text goes through
  * `textContent`, never `innerHTML`, so file names cannot inject markup.
  */
-export class ListingView {
+export class View {
     /** @param {HTMLElement} container The element whose contents the view replaces. */
     constructor(container) {
         this._container = container;

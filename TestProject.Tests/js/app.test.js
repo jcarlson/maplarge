@@ -19,7 +19,7 @@ function fakeApi() {
     };
 }
 
-/** A stand-in for ListingView that records the listings it was asked to show. */
+/** A stand-in for View that records the listings it was asked to show. */
 function fakeView() {
     const shown = [];
     return {
