@@ -1,12 +1,9 @@
 /**
- * The file browser application. It holds the current UI state and the listing
- * for it, and reacts to navigation; the entry module owns the browser's location
+ * The file browser application. It reacts to navigation by loading the listing
+ * for the directory the URL names; the entry module owns the browser's location
  * and translates each change into a `navigate` call.
  */
 export class App {
-    /** @type {import("./url-state.js").UrlState | undefined} */
-    state;
-
     /** @type {import("./api-client.js").Listing | undefined} */
     listing;
 
@@ -16,13 +13,11 @@ export class App {
     }
 
     /**
-     * Responds to a navigation: `state` becomes the current state and the listing
-     * for its directory is loaded. The server accepts `pwd` as is, since a leading
-     * slash means the base directory to it too.
-     * @param {import("./url-state.js").UrlState} state The parsed URL state to move to.
+     * Responds to a navigation by loading the listing for its directory. The server
+     * accepts `pwd` as is, since a leading slash means the base directory to it too.
+     * @param {import("./url-state.js").UrlState} urlState The parsed URL state to move to.
      */
-    async navigate(state) {
-        this.state = state;
-        this.listing = await this._api.listDirectory(state.pwd);
+    async navigate(urlState) {
+        this.listing = await this._api.listDirectory(urlState.pwd);
     }
 }

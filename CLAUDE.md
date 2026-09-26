@@ -95,9 +95,9 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   constructs the `App` with an `ApiClient` over the window's `fetch`, and parses `location.hash` with
   `parseState` into a `navigate` call, once on load and on every `hashchange`. Deliberately thin and
   untested, per decision 14.
-- `wwwroot/js/app.js` — the `App` class, the root of the SPA, constructed with an `ApiClient`. It holds
-  the current `State` and its `Listing`; `navigate(state)` makes a parsed state current and loads the
-  listing for its `pwd` (the server accepts the leading slash). The entry-point module owns
+- `wwwroot/js/app.js` — the `App` class, the root of the SPA, constructed with an `ApiClient`.
+  `navigate(urlState)` loads the `Listing` for the state's `pwd` (the server accepts the leading slash)
+  and keeps it as `listing`. The URL state itself is not stored: the hash is its source of truth. The entry-point module owns
   `location.hash` and calls it on each change. Tests in `TestProject.Tests/js/app.test.js` use a fake
   client.
 - `wwwroot/js/api-client.js` — `ApiClient`, the browser's view of the JSON API, with `fetch` injected

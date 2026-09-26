@@ -19,23 +19,11 @@ function fakeApi() {
     };
 }
 
-test("a new App has no state or listing until it navigates", () => {
-    const app = new App(fakeApi());
-
-    assert.equal(app.state, undefined);
-    assert.equal(app.listing, undefined);
+test("a new App has no listing until it navigates", () => {
+    assert.equal(new App(fakeApi()).listing, undefined);
 });
 
-test("navigate makes the given state current", async () => {
-    const app = new App(fakeApi());
-    const state = { pwd: "/photos", query: { q: "summer" } };
-
-    await app.navigate(state);
-
-    assert.deepEqual(app.state, state);
-});
-
-test("navigate lists the directory the state points at", async () => {
+test("navigate lists the directory the URL state points at", async () => {
     const api = fakeApi();
     const app = new App(api);
 
@@ -45,13 +33,12 @@ test("navigate lists the directory the state points at", async () => {
     assert.deepEqual(app.listing, listing);
 });
 
-test("navigate replaces the previous state and lists again", async () => {
+test("each navigation lists its own directory", async () => {
     const api = fakeApi();
     const app = new App(api);
-    await app.navigate({ pwd: "/photos", query: {} });
 
+    await app.navigate({ pwd: "/photos", query: {} });
     await app.navigate({ pwd: "/", query: {} });
 
-    assert.deepEqual(app.state, { pwd: "/", query: {} });
     assert.deepEqual(api.calls, ["/photos", "/"]);
 });
