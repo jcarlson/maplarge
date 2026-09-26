@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { entryHref, entryName, entrySize, formatSize, listingRows, listingSummary, parentPath } from "../../wwwroot/js/view-helpers.js";
+import { entryHref, entryName, entrySize, formatSize, listingRows, listingSummary, parentPath, searchRows } from "../../wwwroot/js/view-helpers.js";
 
 const directory = { path: "photos/2024 summer", isDirectory: true, size: null };
 const file = { path: "photos/cat.jpg", isDirectory: false, size: 12 };
@@ -76,6 +76,21 @@ test("listingRows at the base points both . and .. at the base", () => {
     const rows = listingRows("/", []);
 
     assert.deepEqual(rows.map(row => row.href), ["#/", "#/"]);
+});
+
+test("searchRows names each match by its path below the searched directory, with no . or ..", () => {
+    const deep = { path: "photos/2024 summer/cats/tabby.jpg", isDirectory: false, size: 3 };
+
+    const rows = searchRows("/photos", [directory, deep]);
+
+    assert.deepEqual(rows, [
+        { name: "2024 summer/", href: "#/photos/2024%20summer", size: "--" },
+        { name: "2024 summer/cats/tabby.jpg", href: "/api/file?path=photos%2F2024+summer%2Fcats%2Ftabby.jpg", size: "3 B" },
+    ]);
+});
+
+test("searchRows from the base uses the whole path", () => {
+    assert.equal(searchRows("/", [file])[0].name, "photos/cat.jpg");
 });
 
 test("listingSummary counts folders and files and totals the file sizes", () => {

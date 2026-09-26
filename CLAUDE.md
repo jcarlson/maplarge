@@ -97,15 +97,15 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   the `App` with both, and parses `location.hash` with `parseState` into a `navigate` call, once on load
   and on every `hashchange`. Deliberately thin and untested, per decision 14.
 - `wwwroot/js/app.js` — the `App` class, the root of the SPA, constructed with an `ApiClient` and a
-  view. `navigate(urlState)` loads the entries for the state's `pwd` (the server accepts the leading
-  slash) and passes the `pwd` and entries to the view's `showListing`. It touches neither the location
-  nor the DOM and stores nothing: the hash is the source of truth for state. Tested with fakes for both
-  dependencies.
+  view. `navigate(urlState)` searches `pwd` and below when `query.q` is set, otherwise lists `pwd`
+  (the server accepts the leading slash), and passes the result to the view's `showSearchResults` or
+  `showListing`. It touches neither the location nor the DOM and stores nothing: the hash is the source
+  of truth for state. Tested with fakes for both dependencies.
 - `wwwroot/js/view.js` — `View`, the DOM side: constructed with a container element,
-  `showListing(pwd, entries)` replaces its contents with a `<table>`: a `<thead>` with Name and Size, a
-  `<tbody>` with one row per `listingRows` row (a link with its `href` and `name`, and a cell with its
-  `size`), and a `<tfoot>` row from `listingSummary`, all via `createElement` and `textContent` (never
-  `innerHTML`). Navigation needs no click handlers: a
+  `showListing(pwd, entries)` and `showSearchResults(pwd, query, entries)` replace its contents with a
+  `<table>`: a `<thead>` with Name and Size, a `<tbody>` with one row per `listingRows` or `searchRows`
+  row (a link with its `href` and `name`, and a cell with its `size`), and a `<tfoot>` row from
+  `listingSummary`, all via `createElement` and `textContent` (never `innerHTML`). Navigation needs no click handlers: a
   directory link changes the hash and `main.js` reacts. The view decides nothing itself, so it stays
   thin and untested on Node; anything that needs a decision (formatting, counts) belongs in a pure,
   tested module. The entry-point module owns
@@ -121,7 +121,9 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
 - `wwwroot/js/view-helpers.js` — pure functions the view calls, tested in
   `TestProject.Tests/js/view-helpers.test.js`. `listingRows(pwd, entries)` is the row model: `.` and `..`
   (via `parentPath`; the base is its own parent) then one `{ name, href, size }` per entry, built from
-  the per-entry helpers (decision 16). `listingSummary(entries)` is the footer: `counts` ("2 folders,
+  the per-entry helpers (decision 16). `searchRows(pwd, entries)` is the row model for search results:
+  no `.` or `..`, and each match named by its path below the searched directory, since matches sit at
+  any depth. `listingSummary(entries)` is the footer: `counts` ("2 folders,
   1 file") and `totalSize` (the file sizes summed, via `formatSize`), both computed on the client
   (decision 17).
   `entryHref(entry)` is the link for an entry: a directory

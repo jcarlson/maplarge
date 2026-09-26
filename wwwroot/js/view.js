@@ -1,4 +1,4 @@
-import { listingRows, listingSummary } from "./view-helpers.js";
+import { listingRows, listingSummary, searchRows } from "./view-helpers.js";
 
 /**
  * Renders a listing into a container element. This is the DOM side of the SPA:
@@ -13,12 +13,32 @@ export class View {
     }
 
     /**
+     * Shows a directory's contents.
      * @param {string} pwd The directory being listed, as `UrlState.pwd`.
      * @param {import("./api-client.js").Entry[]} entries
      */
     showListing(pwd, entries) {
+        this._showTable(listingRows(pwd, entries), entries);
+    }
+
+    /**
+     * Shows the matches of a search within a directory.
+     * @param {string} pwd The directory that was searched, as `UrlState.pwd`.
+     * @param {string} query The text that was searched for.
+     * @param {import("./api-client.js").Entry[]} entries The matches.
+     */
+    showSearchResults(pwd, query, entries) {
+        this._showTable(searchRows(pwd, entries), entries);
+    }
+
+    /**
+     * Replaces the container with a table of `rows`, summarised in its footer.
+     * @param {import("./view-helpers.js").Row[]} rows
+     * @param {import("./api-client.js").Entry[]} entries The entries the rows came from.
+     */
+    _showTable(rows, entries) {
         const body = document.createElement("tbody");
-        for (const { name, href, size } of listingRows(pwd, entries)) {
+        for (const { name, href, size } of rows) {
             const link = document.createElement("a");
             link.href = href;
             link.textContent = name;

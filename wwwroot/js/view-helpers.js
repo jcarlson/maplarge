@@ -24,6 +24,23 @@ export function listingRows(pwd, entries) {
 }
 
 /**
+ * The rows for search results: one per entry, named by its path relative to the
+ * directory that was searched, since a match can sit at any depth below it. No
+ * `.` or `..`, which have no meaning in a result set.
+ * @param {string} pwd The directory that was searched, as `UrlState.pwd`.
+ * @param {import("./api-client.js").Entry[]} entries Matches, with base-relative paths.
+ * @returns {Row[]}
+ */
+export function searchRows(pwd, entries) {
+    const prefix = pwd === "/" ? "" : pwd.slice(1) + "/";
+    return entries.map(entry => ({
+        name: entry.path.slice(prefix.length) + (entry.isDirectory ? "/" : ""),
+        href: entryHref(entry),
+        size: entrySize(entry),
+    }));
+}
+
+/**
  * The footer of the listing table: how many folders and files it holds, and the
  * total size of the files (directories have none and contribute nothing).
  * @param {import("./api-client.js").Entry[]} entries
