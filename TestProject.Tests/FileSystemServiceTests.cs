@@ -76,6 +76,53 @@ namespace TestProject.Tests {
         }
 
         [Fact]
+        public void GetFileInfo_ReturnsInfoForExistingFile() {
+            File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "hello");
+
+            var info = new FileSystemService(_baseDirectory).GetFileInfo("notes.txt");
+
+            Assert.Equal("notes.txt", info.Name);
+            Assert.Equal(Path.Combine(_baseDirectory, "notes.txt"), info.FullName);
+            Assert.Equal(5, info.Length);
+        }
+
+        [Theory]
+        [InlineData("photos/cat.jpg")]
+        [InlineData("/photos/cat.jpg")]
+        public void GetFileInfo_NestedFile_ResolvesRelativeToBase(string path) {
+            Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
+            File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg"), "meow");
+
+            var info = new FileSystemService(_baseDirectory).GetFileInfo(path);
+
+            Assert.Equal(Path.Combine(_baseDirectory, "photos", "cat.jpg"), info.FullName);
+        }
+
+        [Fact]
+        public void GetFileInfo_MissingFile_Throws() {
+            var service = new FileSystemService(_baseDirectory);
+
+            Assert.Throws<FileNotFoundException>(() => service.GetFileInfo("nope.txt"));
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("photos")]
+        public void GetFileInfo_DirectoryAtPath_ThrowsFileNotFound(string path) {
+            Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
+            var service = new FileSystemService(_baseDirectory);
+
+            Assert.Throws<FileNotFoundException>(() => service.GetFileInfo(path));
+        }
+
+        [Fact]
+        public void GetFileInfo_PathEscapingBase_Throws() {
+            var service = new FileSystemService(_baseDirectory);
+
+            Assert.Throws<ArgumentException>(() => service.GetFileInfo("../secret.txt"));
+        }
+
+        [Fact]
         public void Constructor_NormalizesBaseDirectoryPath() {
             File.WriteAllText(Path.Combine(_baseDirectory, "file.txt"), "");
             var unnormalized = _baseDirectory + Path.DirectorySeparatorChar + "." + Path.DirectorySeparatorChar;

@@ -87,3 +87,20 @@ filter keeps the mapping next to the code that knows what those exceptions mean;
 having once several endpoints share the same mapping. Because the controller holds no logic of its own,
 its tests call the action directly against a `FileSystemService` over a temp directory, which checks the
 status-code mapping without hosting the app.
+
+## 8. `GetFileInfo` describes a file instead of opening it
+
+**Decision:** `FileSystemService.GetFileInfo(path)` resolves the path with the same containment rule as
+`ListDirectory` and returns a `FileInfo` for it. It opens no handle. A path that resolves to a directory,
+or to nothing, throws `FileNotFoundException`; an escaping path throws `ArgumentException` as before. The
+absolute path therefore reaches the controller via `FileInfo.FullName`; it is server-side only and must
+never be written into a response.
+
+**Why:** A `ReadFile` method returning an open `Stream` was considered and rejected. It would make the
+service hand out a handle the caller must remember to dispose, and in a controller the stream has to
+outlive the action anyway, so the open and close could never sit in one method. Returning a `FileInfo`
+lets the controller use MVC's physical-file result, which opens and closes the file itself, serves it
+through Kestrel's sendfile path with no managed-buffer copy, and handles Range requests, so the fastest
+download path is available without the service knowing about HTTP. Treating a directory as "no file"
+keeps one exception type meaning 404 for the controller. `FileInfo` also carries the length and timestamps
+that size totals will want later, though that was not the reason for the choice.

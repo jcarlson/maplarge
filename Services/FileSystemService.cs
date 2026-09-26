@@ -27,5 +27,23 @@ namespace TestProject.Services {
                 .Order(StringComparer.Ordinal)
                 .ToList();
         }
+
+        /// <summary>
+        /// Describes the file at <paramref name="path"/>, given relative to the base. No handle is
+        /// opened; the caller decides how to read the file, e.g. by handing
+        /// <see cref="FileInfo.FullName"/> to the framework so it owns the open and close.
+        /// </summary>
+        /// <exception cref="ArgumentException">The path would escape the base directory.</exception>
+        /// <exception cref="FileNotFoundException">
+        /// No file exists at the path under the base. A directory at the path counts as no file.
+        /// </exception>
+        public FileInfo GetFileInfo(string path) {
+            var file = new FileInfo(_paths.Resolve(path));
+            if (!file.Exists) {
+                throw new FileNotFoundException($"File does not exist under the base directory: {path}", path);
+            }
+
+            return file;
+        }
     }
 }

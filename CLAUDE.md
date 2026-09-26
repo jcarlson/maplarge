@@ -76,8 +76,8 @@ Unit tests (xUnit) live in `TestProject.Tests/`. Run them with `dotnet test`, or
   directory via `FileSystemService` as a JSON array of base-relative paths (400 if the path escapes the base,
   404 if it does not exist).
 - `wwwroot/index.html` — placeholder page, launched by default (`launchUrl: index.html`).
-- `Services/FileSystemService.cs` — the operations on the configured base directory (currently
-  `ListDirectory`), taking and returning paths relative to the base. Constructed in `Program.cs` from
+- `Services/FileSystemService.cs` — the operations on the configured base directory (`ListDirectory`,
+  `GetFileInfo`), taking and returning paths relative to the base. Constructed in `Program.cs` from
   `FileBrowser:BaseDirectory` and registered as a singleton.
 - `Services/PathResolver.cs` — maps client-supplied relative paths to absolute paths inside the base;
   normalises the path and rejects anything that escapes the base. Pure string logic, no filesystem access.
