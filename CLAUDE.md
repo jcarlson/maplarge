@@ -38,6 +38,10 @@ current request covers, no more. If a natural next step exists, mention it in a 
 This applies to helper methods, factories, extra properties and "while I'm here" additions as much as to whole
 features.
 
+The corollary is that the design grows **organically**: a class, abstraction, or option is introduced only when a
+concrete need for it appears in the current step, never in anticipation of a later requirement. Let the code stay
+as simple as the features built so far allow, and refactor when the next feature actually demands it.
+
 ## Commands
 
 The project targets `net8.0`; the installed SDK is .NET 10, which builds it fine.
