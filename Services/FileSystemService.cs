@@ -27,17 +27,23 @@ namespace TestProject.Services {
         }
 
         /// <summary>
-        /// Finds every file and directory anywhere under the base whose name contains
+        /// Finds every file and directory anywhere under <paramref name="path"/>, a directory given
+        /// relative to the base (empty or "/" for the base itself), whose name contains
         /// <paramref name="query"/>, ignoring case. Only the entry's own name is matched, never
         /// the directories above it, so a query of "photos" finds the "photos" directory but not
-        /// the files inside it. Subdirectories that cannot be read are skipped rather than
+        /// the files inside it. Paths in the result are relative to the base, not to
+        /// <paramref name="path"/>. Subdirectories that cannot be read are skipped rather than
         /// failing the whole search.
         /// </summary>
-        /// <exception cref="ArgumentException">The query is empty or whitespace.</exception>
-        public IReadOnlyList<FileSystemEntry> Search(string query) {
+        /// <exception cref="ArgumentException">
+        /// The path would escape the base directory, or the query is empty or whitespace.
+        /// </exception>
+        /// <exception cref="DirectoryNotFoundException">The directory does not exist under the base.</exception>
+        public IReadOnlyList<FileSystemEntry> Search(string path, string query) {
             if (string.IsNullOrWhiteSpace(query)) {
                 throw new ArgumentException("Search query must not be empty.", nameof(query));
             }
+            var directory = new DirectoryInfo(_paths.Resolve(path));
 
             var options = new EnumerationOptions {
                 RecurseSubdirectories = true,
@@ -45,7 +51,7 @@ namespace TestProject.Services {
                 // Show the same entries a listing would: the defaults skip hidden and system files.
                 AttributesToSkip = 0,
             };
-            var matches = new DirectoryInfo(_paths.BaseDirectory)
+            var matches = directory
                 .EnumerateFileSystemInfos("*", options)
                 .Where(info => info.Name.Contains(query, StringComparison.OrdinalIgnoreCase));
             return ToOrderedEntries(matches);

@@ -97,7 +97,7 @@ namespace TestProject.Tests {
             File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cats", "tabby-cat.jpg"), "123");
             File.WriteAllText(Path.Combine(_baseDirectory, "photos", "dog.jpg"), "");
 
-            var entries = new FileSystemService(_baseDirectory).Search("cat");
+            var entries = new FileSystemService(_baseDirectory).Search("", "cat");
 
             Assert.Equal(
                 new[] {
@@ -112,7 +112,7 @@ namespace TestProject.Tests {
         public void Search_IgnoresCase() {
             File.WriteAllText(Path.Combine(_baseDirectory, "README.md"), "");
 
-            var entries = new FileSystemService(_baseDirectory).Search("readme");
+            var entries = new FileSystemService(_baseDirectory).Search("", "readme");
 
             Assert.Equal(new[] { new FileSystemEntry("README.md", IsDirectory: false, Size: 0) }, entries);
         }
@@ -122,7 +122,7 @@ namespace TestProject.Tests {
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
             File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg"), "");
 
-            var entries = new FileSystemService(_baseDirectory).Search("photos");
+            var entries = new FileSystemService(_baseDirectory).Search("", "photos");
 
             Assert.Equal(new[] { new FileSystemEntry("photos", IsDirectory: true, Size: null) }, entries);
         }
@@ -131,7 +131,7 @@ namespace TestProject.Tests {
         public void Search_NoMatches_ReturnsNoEntries() {
             File.WriteAllText(Path.Combine(_baseDirectory, "dog.jpg"), "");
 
-            var entries = new FileSystemService(_baseDirectory).Search("cat");
+            var entries = new FileSystemService(_baseDirectory).Search("", "cat");
 
             Assert.Empty(entries);
         }
@@ -142,7 +142,42 @@ namespace TestProject.Tests {
         public void Search_BlankQuery_Throws(string query) {
             var service = new FileSystemService(_baseDirectory);
 
-            Assert.Throws<ArgumentException>(() => service.Search(query));
+            Assert.Throws<ArgumentException>(() => service.Search("", query));
+        }
+
+        [Theory]
+        [InlineData("photos")]
+        [InlineData("/photos")]
+        [InlineData("photos/")]
+        public void Search_Subdirectory_FindsOnlyEntriesBelowIt_WithPathsRelativeToBase(string path) {
+            File.WriteAllText(Path.Combine(_baseDirectory, "cat.txt"), "");
+            Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos", "cats"));
+            File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cats", "tabby-cat.jpg"), "123");
+            Directory.CreateDirectory(Path.Combine(_baseDirectory, "docs"));
+            File.WriteAllText(Path.Combine(_baseDirectory, "docs", "cat-care.md"), "");
+
+            var entries = new FileSystemService(_baseDirectory).Search(path, "cat");
+
+            Assert.Equal(
+                new[] {
+                    new FileSystemEntry(Path.Combine("photos", "cats"), IsDirectory: true, Size: null),
+                    new FileSystemEntry(Path.Combine("photos", "cats", "tabby-cat.jpg"), IsDirectory: false, Size: 3),
+                },
+                entries);
+        }
+
+        [Fact]
+        public void Search_MissingSubdirectory_Throws() {
+            var service = new FileSystemService(_baseDirectory);
+
+            Assert.Throws<DirectoryNotFoundException>(() => service.Search("nope", "cat"));
+        }
+
+        [Fact]
+        public void Search_PathEscapingBase_Throws() {
+            var service = new FileSystemService(_baseDirectory);
+
+            Assert.Throws<ArgumentException>(() => service.Search("../", "cat"));
         }
 
         [Fact]

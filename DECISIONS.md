@@ -320,3 +320,18 @@ for the reason decision 10 gave: it is the same on every platform and the client
 given. This reverses part of decision 11, which is the expected outcome of building one step at a time:
 the total was the right thing to add when the server was the only place that could compute it, and the
 right thing to remove once it was not.
+
+## 18. Search is scoped to a directory: `GET /api/search?path=&q=` walks `path` and below
+
+**Decision:** `FileSystemService.Search(path, query)` starts its recursive walk at the directory `path`,
+resolved through `PathResolver` like every other path, instead of always at the base; the controller
+takes `path` as a query parameter alongside `q`, and an empty or omitted `path` still searches the whole
+base. Result paths stay relative to the base, not to `path`, so an entry is addressed the same way
+whichever view it appears in. A missing directory is a 404 and an escaping path a 400, as for a listing.
+
+**Why:** The UI's state is a directory plus an optional query (decision 15), so `#/photos?q=cat` reads as
+"cat, within photos", and a global search would make the directory part of the URL meaningless while a
+query is present. Scoping also makes clearing a search trivial, a link back to the same directory with
+no query, and it is the cheaper search since it walks only the subtree; a global search remains one
+click away, from the base. This is the `path` parameter decision 13 deferred until the UI needed it;
+the order `(path, query)` follows the other service methods, which take the directory first.

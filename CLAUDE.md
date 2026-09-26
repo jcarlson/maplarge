@@ -85,9 +85,10 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   `POST /api/file?path=` with a multipart `file` part writes the upload into the directory `path` via
   `FileSystemService.WriteFileAsync`, never overwriting: 201 with the new `FileSystemEntry` and a `Location` header,
   400 for an escaping path or a non-plain file name, 404 if the directory is missing, 409 if the name is taken.
-- `Controllers/SearchController.cs` — `GET /api/search?q=` finds files and folders anywhere under the base
-  whose name contains `q` (case-insensitive) via `FileSystemService.Search`, returned as a JSON array of
-  `FileSystemEntry` (400 if `q` is missing or blank).
+- `Controllers/SearchController.cs` — `GET /api/search?path=&q=` finds files and folders anywhere under the
+  directory `path` (the whole base when omitted) whose name contains `q` (case-insensitive) via
+  `FileSystemService.Search`, returned as a JSON array of `FileSystemEntry` with base-relative paths (400
+  if `q` is missing or blank or `path` escapes the base, 404 if the directory is missing).
 - `wwwroot/index.html` — the SPA's page, launched by default (`launchUrl: index.html`): the
   `<script type="module" src="js/main.js">` tag in the head (module scripts are deferred, so it runs
   after the DOM is parsed) and the `<main id="listing">` container the view renders into.
@@ -140,7 +141,8 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
 - `Services/FileSystemService.cs` — the operations on the configured base directory (`ListDirectory`,
   `Search`, `GetFileInfo`, `WriteFileAsync`), taking paths relative to the base. `ListDirectory` and
   `Search` return an `IReadOnlyList<FileSystemEntry>` ordered directories first, then files, each group in
-  ordinal path order; `Search` walks the whole base recursively and matches the entry name only.
+  ordinal path order; `Search(path, query)` walks the directory `path` recursively and matches the entry
+  name only, returning base-relative paths.
   `WriteFileAsync` creates a new file (never overwrites) and returns its `FileSystemEntry`. Constructed in
   `Program.cs` from `FileBrowser:BaseDirectory` and registered as a singleton.
 - `Services/EntryExistsException.cs` — thrown by the service when a create would clash with an existing

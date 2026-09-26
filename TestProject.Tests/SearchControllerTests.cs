@@ -62,5 +62,32 @@ namespace TestProject.Tests {
 
             Assert.IsType<BadRequestResult>(result.Result);
         }
+
+        [Fact]
+        public void Search_Subdirectory_ReturnsOkWithMatchesBelowItOnly() {
+            Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
+            File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg"), "meow");
+            File.WriteAllText(Path.Combine(_baseDirectory, "cat.txt"), "");
+
+            var result = _controller.Search("cat", "photos");
+
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            var entries = Assert.IsAssignableFrom<IReadOnlyList<FileSystemEntry>>(ok.Value);
+            Assert.Equal(new[] { new FileSystemEntry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 4) }, entries);
+        }
+
+        [Fact]
+        public void Search_MissingDirectory_ReturnsNotFound() {
+            var result = _controller.Search("cat", "nope");
+
+            Assert.IsType<NotFoundResult>(result.Result);
+        }
+
+        [Fact]
+        public void Search_PathEscapingBase_ReturnsBadRequest() {
+            var result = _controller.Search("cat", "../");
+
+            Assert.IsType<BadRequestResult>(result.Result);
+        }
     }
 }
