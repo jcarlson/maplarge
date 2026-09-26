@@ -25,6 +25,15 @@ export class ApiError extends Error {
 }
 
 /**
+ * The URL that serves the file at `path`, for use as a link's `href`: the browser
+ * follows it as a download, so no `fetch` is involved.
+ * @param {string} path File path relative to the base.
+ */
+export function fileUrl(path) {
+    return "/api/file?" + new URLSearchParams({ path });
+}
+
+/**
  * Talks to the server's JSON API. It knows the routes and their shapes and nothing
  * about the DOM; `fetch` is passed in so tests can supply a fake.
  */

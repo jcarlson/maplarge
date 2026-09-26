@@ -100,15 +100,21 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   slash) and passes it to the view's `showListing`. It touches neither the location nor the DOM and
   stores nothing: the hash is the source of truth for state. Tested with fakes for both dependencies.
 - `wwwroot/js/view.js` — `View`, the DOM side: constructed with a container element,
-  `showListing(listing)` replaces its contents with one element per entry, via `createElement` and
-  `textContent` (never `innerHTML`). It decides nothing itself, so it stays thin and untested on Node;
-  anything that needs a decision (formatting, links, counts) belongs in a pure, tested module. The entry-point module owns
+  `showListing(listing)` replaces its contents with one `<a>` per entry, its `href` from `entryHref`,
+  via `createElement` and `textContent` (never `innerHTML`). Navigation needs no click handlers: a
+  directory link changes the hash and `main.js` reacts. The view decides nothing itself, so it stays
+  thin and untested on Node; anything that needs a decision (formatting, counts) belongs in a pure,
+  tested module. The entry-point module owns
   `location.hash` and calls it on each change. Tests in `TestProject.Tests/js/app.test.js` use a fake
   client.
 - `wwwroot/js/api-client.js` — `ApiClient`, the browser's view of the JSON API, with `fetch` injected
   through the constructor so tests pass a fake. `listDirectory(path)` calls `GET /api/dir` and resolves
-  to the `Listing`; a non-2xx status rejects with an `ApiError` carrying the HTTP status. The JSDoc
-  typedefs for `Listing` and `Entry` live here too.
+  to the `Listing`; a non-2xx status rejects with an `ApiError` carrying the HTTP status. The module
+  also exports `fileUrl(path)`, the `GET /api/file` link for a download (followed by the browser, not
+  fetched). The JSDoc typedefs for `Listing` and `Entry` live here too.
+- `wwwroot/js/view-helpers.js` — pure functions the view calls. `entryHref(entry)` is the link for an entry: a directory links to
+  its own listing in the hash (via `serializeState`, dropping any search), a file to `fileUrl`. Pure and
+  tested in `TestProject.Tests/js/view-helpers.test.js`.
 - `wwwroot/js/url-state.js` — the `UrlState` `{ pwd, query }` and its URL-fragment form
   `#/path/to/dir?key=value` (decision 15): `parseState(hash)` and `serializeState(state)`, pure string
   logic with no DOM access. `pwd` always starts with `/`; `query` is a generic object of the pairs after

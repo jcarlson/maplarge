@@ -1,3 +1,5 @@
+import { entryHref } from "./view-helpers.js";
+
 /**
  * Renders a listing into a container element. This is the DOM side of the SPA:
  * it copies what it is given onto elements and decides nothing itself, so it
@@ -14,8 +16,11 @@ export class View {
     showListing(listing) {
         const list = document.createElement("ul");
         for (const entry of listing.entries) {
+            const link = document.createElement("a");
+            link.href = entryHref(entry);
+            link.textContent = entry.path;
             const item = document.createElement("li");
-            item.textContent = entry.path;
+            item.append(link);
             list.append(item);
         }
         this._container.replaceChildren(list);

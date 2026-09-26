@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ApiClient, ApiError } from "../../wwwroot/js/api-client.js";
+import { ApiClient, ApiError, fileUrl } from "../../wwwroot/js/api-client.js";
 
 /**
  * A fake `fetch` that records the URL it was asked for and answers with `body` as JSON.
@@ -58,4 +58,8 @@ test("listDirectory throws an ApiError carrying the status for a non-OK response
         () => new ApiClient(fetch).listDirectory("missing"),
         (error) => error instanceof ApiError && error.status === 404,
     );
+});
+
+test("fileUrl points at GET /api/file with the path as a query parameter", () => {
+    assert.equal(fileUrl("photos/2024 summer/cat.jpg"), "/api/file?path=photos%2F2024+summer%2Fcat.jpg");
 });
