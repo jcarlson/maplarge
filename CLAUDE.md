@@ -100,8 +100,9 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   slash) and passes it to the view's `showListing`. It touches neither the location nor the DOM and
   stores nothing: the hash is the source of truth for state. Tested with fakes for both dependencies.
 - `wwwroot/js/view.js` — `View`, the DOM side: constructed with a container element,
-  `showListing(listing)` replaces its contents with one `<a>` per entry, its `href` from `entryHref`,
-  via `createElement` and `textContent` (never `innerHTML`). Navigation needs no click handlers: a
+  `showListing(listing)` replaces its contents with a `<table>` (Name and Size headers) holding one row
+  per entry: a link with `href` from `entryHref` and text from `entryName`, and a size cell from
+  `entrySize`, all via `createElement` and `textContent` (never `innerHTML`). Navigation needs no click handlers: a
   directory link changes the hash and `main.js` reacts. The view decides nothing itself, so it stays
   thin and untested on Node; anything that needs a decision (formatting, counts) belongs in a pure,
   tested module. The entry-point module owns
@@ -112,9 +113,11 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   to the `Listing`; a non-2xx status rejects with an `ApiError` carrying the HTTP status. The module
   also exports `fileUrl(path)`, the `GET /api/file` link for a download (followed by the browser, not
   fetched). The JSDoc typedefs for `Listing` and `Entry` live here too.
-- `wwwroot/js/view-helpers.js` — pure functions the view calls. `entryHref(entry)` is the link for an entry: a directory links to
-  its own listing in the hash (via `serializeState`, dropping any search), a file to `fileUrl`. Pure and
-  tested in `TestProject.Tests/js/view-helpers.test.js`.
+- `wwwroot/js/view-helpers.js` — pure functions the view calls, tested in
+  `TestProject.Tests/js/view-helpers.test.js`. `entryHref(entry)` is the link for an entry: a directory
+  links to its own listing in the hash (via `serializeState`, dropping any search), a file to `fileUrl`.
+  `entryName(entry)` is the last path segment, with a trailing `/` for a directory. `entrySize(entry)`
+  is the byte count for a file and `--` for a directory.
 - `wwwroot/js/url-state.js` — the `UrlState` `{ pwd, query }` and its URL-fragment form
   `#/path/to/dir?key=value` (decision 15): `parseState(hash)` and `serializeState(state)`, pure string
   logic with no DOM access. `pwd` always starts with `/`; `query` is a generic object of the pairs after

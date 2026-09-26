@@ -1,4 +1,4 @@
-import { entryHref } from "./view-helpers.js";
+import { entryHref, entryName, entrySize } from "./view-helpers.js";
 
 /**
  * Renders a listing into a container element. This is the DOM side of the SPA:
@@ -14,15 +14,29 @@ export class View {
 
     /** @param {import("./api-client.js").Listing} listing */
     showListing(listing) {
-        const list = document.createElement("ul");
+        const table = document.createElement("table");
+        table.append(row("th", ["Name", "Size"]));
         for (const entry of listing.entries) {
             const link = document.createElement("a");
             link.href = entryHref(entry);
-            link.textContent = entry.path;
-            const item = document.createElement("li");
-            item.append(link);
-            list.append(item);
+            link.textContent = entryName(entry);
+            table.append(row("td", [link, entrySize(entry)]));
         }
-        this._container.replaceChildren(list);
+        this._container.replaceChildren(table);
     }
+}
+
+/**
+ * A `<tr>` with one cell per value: a string becomes the cell's text, a node its child.
+ * @param {"th" | "td"} cellTag
+ * @param {(string | Node)[]} cells
+ */
+function row(cellTag, cells) {
+    const tr = document.createElement("tr");
+    for (const cell of cells) {
+        const td = document.createElement(cellTag);
+        td.append(cell);
+        tr.append(td);
+    }
+    return tr;
 }
