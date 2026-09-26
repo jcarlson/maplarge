@@ -100,9 +100,10 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   slash) and passes the `pwd` and listing to the view's `showListing`. It touches neither the location nor the DOM and
   stores nothing: the hash is the source of truth for state. Tested with fakes for both dependencies.
 - `wwwroot/js/view.js` — `View`, the DOM side: constructed with a container element,
-  `showListing(pwd, listing)` replaces its contents with a `<table>` (Name and Size headers) holding one
-  row per `listingRows` row: a link with its `href` and `name`, and a cell with its `size`, all via
-  `createElement` and `textContent` (never `innerHTML`). Navigation needs no click handlers: a
+  `showListing(pwd, listing)` replaces its contents with a `<table>`: a `<thead>` with Name and Size, a
+  `<tbody>` with one row per `listingRows` row (a link with its `href` and `name`, and a cell with its
+  `size`), and a `<tfoot>` row from `listingSummary`, all via `createElement` and `textContent` (never
+  `innerHTML`). Navigation needs no click handlers: a
   directory link changes the hash and `main.js` reacts. The view decides nothing itself, so it stays
   thin and untested on Node; anything that needs a decision (formatting, counts) belongs in a pure,
   tested module. The entry-point module owns
@@ -116,7 +117,9 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
 - `wwwroot/js/view-helpers.js` — pure functions the view calls, tested in
   `TestProject.Tests/js/view-helpers.test.js`. `listingRows(pwd, listing)` is the row model: `.` and `..`
   (via `parentPath`; the base is its own parent) then one `{ name, href, size }` per entry, built from
-  the per-entry helpers (decision 16). `entryHref(entry)` is the link for an entry: a directory
+  the per-entry helpers (decision 16). `listingSummary(listing)` is the footer: `counts` ("2 folders,
+  1 file", computed from the entries) and `totalSize` (the server's total via `formatSize`).
+  `entryHref(entry)` is the link for an entry: a directory
   links to its own listing in the hash (via `serializeState`, dropping any search), a file to `fileUrl`.
   `entryName(entry)` is the last path segment, with a trailing `/` for a directory. `entrySize(entry)`
   is a file's size via `formatSize` and `--` for a directory. `formatSize(bytes)` scales to the largest

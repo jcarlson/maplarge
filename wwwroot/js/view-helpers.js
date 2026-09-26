@@ -24,6 +24,26 @@ export function listingRows(pwd, listing) {
 }
 
 /**
+ * The footer of the listing table: how many folders and files it holds, and their
+ * total size. Counts are taken from the entries; the total is the server's.
+ * @param {import("./api-client.js").Listing} listing
+ * @returns {{ counts: string, totalSize: string }}
+ */
+export function listingSummary(listing) {
+    const folders = listing.entries.filter(entry => entry.isDirectory).length;
+    const files = listing.entries.length - folders;
+    return {
+        counts: `${plural(folders, "folder")}, ${plural(files, "file")}`,
+        totalSize: formatSize(listing.totalSize),
+    };
+}
+
+/** `1 file`, `2 files`. @param {number} count @param {string} noun */
+function plural(count, noun) {
+    return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+/**
  * The parent of a `pwd`; the base directory is its own parent.
  * @param {string} pwd
  * @returns {string}

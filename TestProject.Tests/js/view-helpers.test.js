@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { entryHref, entryName, entrySize, formatSize, listingRows, parentPath } from "../../wwwroot/js/view-helpers.js";
+import { entryHref, entryName, entrySize, formatSize, listingRows, listingSummary, parentPath } from "../../wwwroot/js/view-helpers.js";
 
 const directory = { path: "photos/2024 summer", isDirectory: true, size: null };
 const file = { path: "photos/cat.jpg", isDirectory: false, size: 12 };
@@ -76,4 +76,15 @@ test("listingRows at the base points both . and .. at the base", () => {
     const rows = listingRows("/", { entries: [], totalSize: 0 });
 
     assert.deepEqual(rows.map(row => row.href), ["#/", "#/"]);
+});
+
+test("listingSummary counts folders and files and formats the server's total", () => {
+    const summary = listingSummary({ entries: [directory, directory, file], totalSize: 1536 });
+
+    assert.deepEqual(summary, { counts: "2 folders, 1 file", totalSize: "1.50 K" });
+});
+
+test("listingSummary uses the singular for one and the plural for zero", () => {
+    assert.equal(listingSummary({ entries: [directory], totalSize: 0 }).counts, "1 folder, 0 files");
+    assert.equal(listingSummary({ entries: [], totalSize: 0 }).counts, "0 folders, 0 files");
 });

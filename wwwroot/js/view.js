@@ -1,4 +1,4 @@
-import { listingRows } from "./view-helpers.js";
+import { listingRows, listingSummary } from "./view-helpers.js";
 
 /**
  * Renders a listing into a container element. This is the DOM side of the SPA:
@@ -17,14 +17,21 @@ export class View {
      * @param {import("./api-client.js").Listing} listing
      */
     showListing(pwd, listing) {
-        const table = document.createElement("table");
-        table.append(row("th", ["Name", "Size"]));
+        const body = document.createElement("tbody");
         for (const { name, href, size } of listingRows(pwd, listing)) {
             const link = document.createElement("a");
             link.href = href;
             link.textContent = name;
-            table.append(row("td", [link, size]));
+            body.append(row("td", [link, size]));
         }
+
+        const { counts, totalSize } = listingSummary(listing);
+        const table = document.createElement("table");
+        table.append(
+            section("thead", row("th", ["Name", "Size"])),
+            body,
+            section("tfoot", row("td", [counts, totalSize])),
+        );
         this._container.replaceChildren(table);
     }
 }
@@ -42,4 +49,15 @@ function row(cellTag, cells) {
         tr.append(td);
     }
     return tr;
+}
+
+/**
+ * A table section holding one row.
+ * @param {"thead" | "tfoot"} tag
+ * @param {HTMLTableRowElement} tr
+ */
+function section(tag, tr) {
+    const element = document.createElement(tag);
+    element.append(tr);
+    return element;
 }
