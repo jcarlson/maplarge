@@ -165,3 +165,33 @@ can be added later without changing the meaning of an existing value. `TotalSize
 in the constructor; it counts only the files directly in the listing, matching decision 10's `ls`-not-`du`
 scope. No extra I/O is incurred: `EnumerateFileSystemInfos` already populates the length of each `FileInfo`
 it yields.
+
+## 12. Uploads are a `POST` of one multipart file into a directory, and never overwrite
+
+**Decision:** `POST /api/file?path=<directory>` takes a multipart form with one `file` part and writes it
+into the directory `path` (the base itself when `path` is omitted) under the name the browser sent. The
+target name must be free: an existing file *or* directory of that name is a 409 Conflict, so nothing is
+ever overwritten. A directory that does not exist is a 404, an escaping path or a file name that is not a
+single path segment (empty, `.`, `..`, or containing a separator) is a 400. Success is 201 with the new
+`Entry` as the body and its download URL in `Location`. On the service side this is
+`FileSystemService.WriteFileAsync(directoryPath, fileName, stream)`, which opens the target with
+`FileMode.CreateNew` and returns `Entry.From` for the written file. The name clash is signalled with a new
+`EntryExistsException` (an `IOException` subclass) so the controller can map it to 409 without catching
+every I/O failure.
+
+**Why:** The client names the directory and the server derives the resource name from the upload, which
+is POST-to-a-collection semantics; PUT would mean the client addresses the exact file URI and replaces
+whatever is there. Refusing to overwrite is the safer default for a browser widget where a user can pick a
+file with a clashing name by accident, and it gives a single rule ("the name must be free") instead of one
+behaviour for files and another for directories. Replacing a file becomes delete-then-upload once delete
+exists. `CreateNew` enforces the rule at the OS level so two concurrent uploads of the same name cannot
+both succeed; the explicit `Path.Exists` check before it exists only to give the directory clash the same
+exception type on every platform. Restricting the file name to a single segment keeps the containment
+invariant of decision 6 intact without re-running it on a joined path. One file per request keeps the
+action a straight mapping and gives the client a status code per file; multi-file uploads are just
+concurrent requests. The response body is the same `Entry` a listing would show so the client can insert
+it without re-listing. `IFormFile` was chosen over reading the multipart body by hand: it buffers the
+upload (to disk above 64 KB) before the action runs, which costs a second write for large files, but the
+hand-rolled `MultipartReader` streaming path is several times the code; it is the obvious change to make
+if upload throughput turns out to matter. With this third endpoint the `ArgumentException` → 400 mapping
+now appears in three actions, which is the threshold decision 9 set for moving it into an exception filter.

@@ -78,6 +78,9 @@ Unit tests (xUnit) live in `TestProject.Tests/`. Run them with `dotnet test`, or
 - `Controllers/FileController.cs` — `GET /api/file?path=` serves a file via `FileSystemService.GetFileInfo`
   as a physical-file result: attachment named after the file, MIME type from the extension, range
   requests enabled (400 if the path escapes the base or is missing, 404 if there is no file there).
+  `POST /api/file?path=` with a multipart `file` part writes the upload into the directory `path` via
+  `FileSystemService.WriteFileAsync`, never overwriting: 201 with the new `Entry` and a `Location` header,
+  400 for an escaping path or a non-plain file name, 404 if the directory is missing, 409 if the name is taken.
 - `wwwroot/index.html` — placeholder page, launched by default (`launchUrl: index.html`).
 - `Models/Listing.cs` — the API's view of a set of entries: `Listing` (built from `Entry` values, exposing
   `Entries` and `TotalSize`) and the `Entry(Path, IsDirectory, Size)` record, whose static `From` builds one
@@ -85,8 +88,11 @@ Unit tests (xUnit) live in `TestProject.Tests/`. Run them with `dotnet test`, or
   base-relative, directories first, then files, each in ordinal order; `Size` is bytes for a file, `null` for
   a directory. `Listing` is testable without a filesystem.
 - `Services/FileSystemService.cs` — the operations on the configured base directory (`ListDirectory`,
-  `GetFileInfo`), taking paths relative to the base. `ListDirectory` returns a `Listing`. Constructed in
+  `GetFileInfo`, `WriteFileAsync`), taking paths relative to the base. `ListDirectory` returns a `Listing`;
+  `WriteFileAsync` creates a new file (never overwrites) and returns its `Entry`. Constructed in
   `Program.cs` from `FileBrowser:BaseDirectory` and registered as a singleton.
+- `Services/EntryExistsException.cs` — thrown by the service when a create would clash with an existing
+  file or directory; the controller maps it to 409.
 - `Services/PathResolver.cs` — maps client-supplied relative paths to absolute paths inside the base;
   normalises the path and rejects anything that escapes the base. Pure string logic, no filesystem access.
 - `TestProject.Tests/` — xUnit test project, excluded from the web project's default source globs via

@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
+using TestProject.Models;
 using TestProject.Services;
 
 namespace TestProject.Controllers {
     /// <summary>
-    /// Serves individual files from the configured base directory. Like
+    /// Serves and accepts individual files in the configured base directory. Like
     /// <see cref="DirectoryController"/>, it only maps HTTP to and from
     /// <see cref="FileSystemService"/>; path resolution and existence checks live there.
     /// </summary>
@@ -44,6 +45,34 @@ namespace TestProject.Controllers {
             }
 
             return PhysicalFile(file.FullName, contentType, file.Name, enableRangeProcessing: true);
+        }
+
+        /// <summary>
+        /// POST /api/file?path=photos with a multipart form containing one <c>file</c> part — writes
+        /// the uploaded file into the directory <c>path</c>, named as it was on the client. Omitting
+        /// <c>path</c> uploads into the base itself; omitting <c>file</c> is a 400. Existing files are
+        /// never overwritten.
+        /// </summary>
+        /// <returns>
+        /// 201 with the new <see cref="Entry"/> and its download URL in <c>Location</c>; 400 if the path
+        /// escapes the base or the file name is not a plain name; 404 if the directory does not exist;
+        /// 409 if a file or directory with that name already exists.
+        /// </returns>
+        [HttpPost]
+        public async Task<ActionResult<Entry>> UploadFile(IFormFile file, [FromQuery] string path = "", CancellationToken cancellationToken = default) {
+            Entry entry;
+            try {
+                using var content = file.OpenReadStream();
+                entry = await _fileSystem.WriteFileAsync(path, file.FileName, content, cancellationToken);
+            } catch (ArgumentException) {
+                return BadRequest();
+            } catch (DirectoryNotFoundException) {
+                return NotFound();
+            } catch (EntryExistsException) {
+                return Conflict();
+            }
+
+            return Created($"/api/file?path={Uri.EscapeDataString(entry.Path)}", entry);
         }
     }
 }

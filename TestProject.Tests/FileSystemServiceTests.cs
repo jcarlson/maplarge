@@ -135,6 +135,90 @@ namespace TestProject.Tests {
         }
 
         [Fact]
+        public async Task WriteFileAsync_WritesContentIntoBase_ReturnsFileEntry() {
+            using var content = new MemoryStream("hello"u8.ToArray());
+
+            var entry = await new FileSystemService(_baseDirectory).WriteFileAsync("", "notes.txt", content);
+
+            Assert.Equal(new Entry("notes.txt", IsDirectory: false, Size: 5), entry);
+            Assert.Equal("hello", File.ReadAllText(Path.Combine(_baseDirectory, "notes.txt")));
+        }
+
+        [Theory]
+        [InlineData("photos")]
+        [InlineData("/photos")]
+        [InlineData("photos/")]
+        public async Task WriteFileAsync_Subdirectory_WritesRelativeToBase(string directoryPath) {
+            Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
+            using var content = new MemoryStream("meow"u8.ToArray());
+
+            var entry = await new FileSystemService(_baseDirectory).WriteFileAsync(directoryPath, "cat.jpg", content);
+
+            Assert.Equal(new Entry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 4), entry);
+            Assert.Equal("meow", File.ReadAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg")));
+        }
+
+        [Fact]
+        public async Task WriteFileAsync_MissingDirectory_Throws() {
+            var service = new FileSystemService(_baseDirectory);
+
+            await Assert.ThrowsAsync<DirectoryNotFoundException>(
+                () => service.WriteFileAsync("nope", "notes.txt", Stream.Null));
+        }
+
+        [Fact]
+        public async Task WriteFileAsync_DirectoryPathIsAFile_Throws() {
+            File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "");
+            var service = new FileSystemService(_baseDirectory);
+
+            await Assert.ThrowsAsync<DirectoryNotFoundException>(
+                () => service.WriteFileAsync("notes.txt", "inner.txt", Stream.Null));
+        }
+
+        [Fact]
+        public async Task WriteFileAsync_PathEscapingBase_Throws() {
+            var service = new FileSystemService(_baseDirectory);
+
+            await Assert.ThrowsAsync<ArgumentException>(
+                () => service.WriteFileAsync("../", "notes.txt", Stream.Null));
+        }
+
+        [Fact]
+        public async Task WriteFileAsync_ExistingFile_ThrowsAndLeavesFileUntouched() {
+            File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "original");
+            using var content = new MemoryStream("replacement"u8.ToArray());
+            var service = new FileSystemService(_baseDirectory);
+
+            await Assert.ThrowsAsync<EntryExistsException>(() => service.WriteFileAsync("", "notes.txt", content));
+
+            Assert.Equal("original", File.ReadAllText(Path.Combine(_baseDirectory, "notes.txt")));
+        }
+
+        [Fact]
+        public async Task WriteFileAsync_ExistingDirectoryWithSameName_Throws() {
+            Directory.CreateDirectory(Path.Combine(_baseDirectory, "notes"));
+            var service = new FileSystemService(_baseDirectory);
+
+            await Assert.ThrowsAsync<EntryExistsException>(() => service.WriteFileAsync("", "notes", Stream.Null));
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(".")]
+        [InlineData("..")]
+        [InlineData("sub/notes.txt")]
+        [InlineData("../notes.txt")]
+        public async Task WriteFileAsync_FileNameNotASingleSegment_ThrowsAndWritesNothing(string fileName) {
+            Directory.CreateDirectory(Path.Combine(_baseDirectory, "sub"));
+            var service = new FileSystemService(_baseDirectory);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => service.WriteFileAsync("sub", fileName, Stream.Null));
+
+            Assert.Equal(new[] { Path.Combine(_baseDirectory, "sub") }, Directory.GetFileSystemEntries(_baseDirectory));
+            Assert.Empty(Directory.GetFileSystemEntries(Path.Combine(_baseDirectory, "sub")));
+        }
+
+        [Fact]
         public void Constructor_NormalizesBaseDirectoryPath() {
             File.WriteAllText(Path.Combine(_baseDirectory, "file.txt"), "");
             var unnormalized = _baseDirectory + Path.DirectorySeparatorChar + "." + Path.DirectorySeparatorChar;

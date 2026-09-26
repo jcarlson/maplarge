@@ -43,5 +43,40 @@ namespace TestProject.Services {
 
             return file;
         }
+
+        /// <summary>
+        /// Writes <paramref name="content"/> to a new file named <paramref name="fileName"/> inside
+        /// <paramref name="directoryPath"/>, a directory given relative to the base. The file must not
+        /// already exist; nothing is ever overwritten.
+        /// </summary>
+        /// <returns>The new file as the <see cref="Entry"/> a listing of its directory would show.</returns>
+        /// <exception cref="ArgumentException">
+        /// The directory path would escape the base, or the file name is empty or not a single path segment.
+        /// </exception>
+        /// <exception cref="DirectoryNotFoundException">The directory does not exist under the base.</exception>
+        /// <exception cref="EntryExistsException">A file or directory with that name already exists there.</exception>
+        public async Task<Entry> WriteFileAsync(string directoryPath, string fileName, Stream content, CancellationToken cancellationToken = default) {
+            var directory = new DirectoryInfo(_paths.Resolve(directoryPath));
+            if (!directory.Exists) {
+                throw new DirectoryNotFoundException($"Directory does not exist under the base directory: {directoryPath}");
+            }
+
+            if (fileName.Length == 0 || fileName is "." or ".." || Path.GetFileName(fileName) != fileName) {
+                throw new ArgumentException($"File name must be a single path segment: {fileName}", nameof(fileName));
+            }
+
+            var target = Path.Join(directory.FullName, fileName);
+            if (Path.Exists(target)) {
+                throw new EntryExistsException($"An entry already exists at: {Path.Join(directoryPath, fileName)}");
+            }
+
+            // CreateNew also refuses an existing file, so two racing writes cannot clobber each other.
+            var options = new FileStreamOptions { Mode = FileMode.CreateNew, Access = FileAccess.Write, Options = FileOptions.Asynchronous };
+            await using (var file = new FileStream(target, options)) {
+                await content.CopyToAsync(file, cancellationToken);
+            }
+
+            return Entry.From(_paths.BaseDirectory, new FileInfo(target));
+        }
     }
 }
