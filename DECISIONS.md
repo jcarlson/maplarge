@@ -281,3 +281,21 @@ entry and fires `hashchange`. The path-like layout was chosen over a flat query 
 cost of a few lines to split the path from the query. Keeping the conversion in a DOM-free module follows
 decision 14: it is tested on Node in both directions, including round-trips of paths containing `?`, `#`
 and `%`, and `App` remains the only code that reads the browser's location.
+
+## 16. `.` and `..` rows are added on the client, through a row model the view copies verbatim
+
+**Decision:** Every directory listing starts with `.` (the directory itself) and `..` (its parent, the
+base being its own parent), as `ls -a` shows them. They are not part of the API's `Listing`: the client
+adds them in `listingRows(pwd, listing)` in `wwwroot/js/view-helpers.js`, which turns the current path
+and the server's listing into an array of `{ name, href, size }` rows that the view copies onto table
+rows without looking at them. `App` passes the `pwd` it navigated to along with the listing so the view
+can be given both.
+
+**Why:** `Listing` is the shape of every listing-style response, including search results (decision 13),
+where `.` and `..` have no meaning, and the file and folder counts and total size that the UI must show
+are about the real entries, so pseudo-entries would have to be filtered back out of a listing that
+included them. Injecting them on the server would therefore complicate the model to serve one
+presentation choice. On the client they cost a few lines in a pure module and are tested like every
+other view decision. The row model is a small step beyond the per-entry helpers used until now, taken
+because `.` and `..` are not entries and would otherwise have needed special cases inside the view, which
+decision 14 keeps free of decisions; with rows, the view is the same loop for every kind of row.

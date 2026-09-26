@@ -7,7 +7,7 @@
 export class App {
     /**
      * @param {import("./api-client.js").ApiClient} api
-     * @param {{ showListing(listing: import("./api-client.js").Listing): void }} view
+     * @param {{ showListing(pwd: string, listing: import("./api-client.js").Listing): void }} view
      */
     constructor(api, view) {
         this._api = api;
@@ -22,6 +22,6 @@ export class App {
      */
     async navigate(urlState) {
         const listing = await this._api.listDirectory(urlState.pwd);
-        this._view.showListing(listing);
+        this._view.showListing(urlState.pwd, listing);
     }
 }

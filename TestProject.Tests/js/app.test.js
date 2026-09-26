@@ -19,13 +19,13 @@ function fakeApi() {
     };
 }
 
-/** A stand-in for View that records the listings it was asked to show. */
+/** A stand-in for View that records what it was asked to show. */
 function fakeView() {
     const shown = [];
     return {
         shown,
-        showListing(listing) {
-            shown.push(listing);
+        showListing(pwd, listing) {
+            shown.push({ pwd, listing });
         },
     };
 }
@@ -39,13 +39,13 @@ test("navigate lists the directory the URL state points at", async () => {
     assert.deepEqual(api.calls, ["/photos"]);
 });
 
-test("navigate shows the listing it loaded", async () => {
+test("navigate shows the listing it loaded, with the directory it is for", async () => {
     const view = fakeView();
     const app = new App(fakeApi(), view);
 
     await app.navigate({ pwd: "/photos", query: {} });
 
-    assert.deepEqual(view.shown, [listing]);
+    assert.deepEqual(view.shown, [{ pwd: "/photos", listing }]);
 });
 
 test("each navigation lists and shows its own directory", async () => {

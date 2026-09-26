@@ -1,4 +1,4 @@
-import { entryHref, entryName, entrySize } from "./view-helpers.js";
+import { listingRows } from "./view-helpers.js";
 
 /**
  * Renders a listing into a container element. This is the DOM side of the SPA:
@@ -12,15 +12,18 @@ export class View {
         this._container = container;
     }
 
-    /** @param {import("./api-client.js").Listing} listing */
-    showListing(listing) {
+    /**
+     * @param {string} pwd The directory being listed, as `UrlState.pwd`.
+     * @param {import("./api-client.js").Listing} listing
+     */
+    showListing(pwd, listing) {
         const table = document.createElement("table");
         table.append(row("th", ["Name", "Size"]));
-        for (const entry of listing.entries) {
+        for (const { name, href, size } of listingRows(pwd, listing)) {
             const link = document.createElement("a");
-            link.href = entryHref(entry);
-            link.textContent = entryName(entry);
-            table.append(row("td", [link, entrySize(entry)]));
+            link.href = href;
+            link.textContent = name;
+            table.append(row("td", [link, size]));
         }
         this._container.replaceChildren(table);
     }

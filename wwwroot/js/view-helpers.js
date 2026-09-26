@@ -2,6 +2,38 @@ import { fileUrl } from "./api-client.js";
 import { serializeState } from "./url-state.js";
 
 /**
+ * @typedef {object} Row One row of the listing table, ready to copy onto elements.
+ * @property {string} name The link text.
+ * @property {string} href The link target.
+ * @property {string} size The size column.
+ */
+
+/**
+ * The rows for a directory listing, `ls -a` style: `.` (the directory itself) and
+ * `..` (its parent; the base's parent is the base) first, then one row per entry.
+ * @param {string} pwd The directory being listed, as `UrlState.pwd`.
+ * @param {import("./api-client.js").Listing} listing
+ * @returns {Row[]}
+ */
+export function listingRows(pwd, listing) {
+    return [
+        { name: ".", href: directoryHref(pwd), size: "--" },
+        { name: "..", href: directoryHref(parentPath(pwd)), size: "--" },
+        ...listing.entries.map(entry => ({ name: entryName(entry), href: entryHref(entry), size: entrySize(entry) })),
+    ];
+}
+
+/**
+ * The parent of a `pwd`; the base directory is its own parent.
+ * @param {string} pwd
+ * @returns {string}
+ */
+export function parentPath(pwd) {
+    const parent = pwd.slice(0, pwd.lastIndexOf("/"));
+    return parent || "/";
+}
+
+/**
  * The `href` for an entry in a listing. A directory links to its own listing, so
  * clicking it is a hash change the entry module already handles; a file links to
  * the download endpoint. Any search in the current URL is dropped when entering a
@@ -10,9 +42,7 @@ import { serializeState } from "./url-state.js";
  * @returns {string}
  */
 export function entryHref(entry) {
-    return entry.isDirectory
-        ? serializeState({ pwd: entry.path, query: {} })
-        : fileUrl(entry.path);
+    return entry.isDirectory ? directoryHref(entry.path) : fileUrl(entry.path);
 }
 
 /**
@@ -55,4 +85,9 @@ export function formatSize(bytes) {
     const digits = unit === 0 ? 0 : 2;
     const number = value.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
     return `${number} ${UNITS[unit]}`;
+}
+
+/** The hash link that lists `path`, with no search. @param {string} path */
+function directoryHref(path) {
+    return serializeState({ pwd: path, query: {} });
 }
