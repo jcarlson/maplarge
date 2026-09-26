@@ -5,7 +5,7 @@ using TestProject.Services;
 namespace TestProject.Tests {
     /// <summary>
     /// Calls <see cref="DirectoryController"/> actions directly, backed by a real
-    /// <see cref="DirectoryLister"/> over a throwaway temp directory, so the HTTP mapping is
+    /// <see cref="FileSystemService"/> over a throwaway temp directory, so the HTTP mapping is
     /// tested without a running host.
     /// </summary>
     public class DirectoryControllerTests : IDisposable {
@@ -15,7 +15,7 @@ namespace TestProject.Tests {
 
         public DirectoryControllerTests() {
             Directory.CreateDirectory(_baseDirectory);
-            _controller = new DirectoryController(new DirectoryLister(_baseDirectory));
+            _controller = new DirectoryController(new FileSystemService(_baseDirectory));
         }
 
         public void Dispose() {

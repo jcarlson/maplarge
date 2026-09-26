@@ -4,15 +4,15 @@ using TestProject.Services;
 namespace TestProject.Controllers {
     /// <summary>
     /// JSON API for browsing the configured base directory. The controller only translates
-    /// HTTP to and from <see cref="DirectoryLister"/>; all path and listing logic lives there.
+    /// HTTP to and from <see cref="FileSystemService"/>; all path and listing logic lives there.
     /// </summary>
     [ApiController]
     [Route("api/dir")]
     public class DirectoryController : ControllerBase {
-        private readonly DirectoryLister _lister;
+        private readonly FileSystemService _fileSystem;
 
-        public DirectoryController(DirectoryLister lister) {
-            _lister = lister;
+        public DirectoryController(FileSystemService fileSystem) {
+            _fileSystem = fileSystem;
         }
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace TestProject.Controllers {
         [HttpGet]
         public ActionResult<IReadOnlyList<string>> List([FromQuery] string path = "") {
             try {
-                return Ok(_lister.List(path));
+                return Ok(_fileSystem.ListDirectory(path));
             } catch (ArgumentException) {
                 return BadRequest();
             } catch (DirectoryNotFoundException) {

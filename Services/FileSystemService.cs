@@ -1,12 +1,12 @@
 namespace TestProject.Services {
     /// <summary>
-    /// Lists directories under a fixed base directory. Every entry is reported as a path
-    /// relative to that base, so callers never see where on disk the base lives.
+    /// Operations on the files and directories under a fixed base directory. Every path taken
+    /// or returned is relative to that base, so callers never see where on disk the base lives.
     /// </summary>
-    public class DirectoryLister {
+    public class FileSystemService {
         private readonly PathResolver _paths;
 
-        public DirectoryLister(string baseDirectory) {
+        public FileSystemService(string baseDirectory) {
             _paths = new PathResolver(baseDirectory);
             if (!Directory.Exists(_paths.BaseDirectory)) {
                 throw new DirectoryNotFoundException($"Base directory does not exist: {_paths.BaseDirectory}");
@@ -20,7 +20,7 @@ namespace TestProject.Services {
         /// </summary>
         /// <exception cref="ArgumentException">The path would escape the base directory.</exception>
         /// <exception cref="DirectoryNotFoundException">The directory does not exist under the base.</exception>
-        public IReadOnlyList<string> List(string path = "") {
+        public IReadOnlyList<string> ListDirectory(string path = "") {
             var directory = _paths.Resolve(path);
             return Directory.EnumerateFileSystemEntries(directory)
                 .Select(entry => Path.GetRelativePath(_paths.BaseDirectory, entry))

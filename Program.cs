@@ -12,7 +12,7 @@ namespace TestProject {
             var baseDirectory = builder.Configuration["FileBrowser:BaseDirectory"]
                 ?? throw new InvalidOperationException("FileBrowser:BaseDirectory is not configured.");
             builder.Services.AddSingleton(
-                new DirectoryLister(Path.GetFullPath(baseDirectory, builder.Environment.ContentRootPath)));
+                new FileSystemService(Path.GetFullPath(baseDirectory, builder.Environment.ContentRootPath)));
 
             var app = builder.Build();
 

@@ -37,19 +37,19 @@ safe behavior and can be revisited if time allows.
 
 **Decision:** The browsable root is read from `FileBrowser:BaseDirectory` in `appsettings.json` (or the
 `FileBrowser__BaseDirectory` environment variable) as a plain string in `Program.cs`, resolved to an absolute
-path against the app's content root, and handed to `DirectoryLister` as a constructor argument. There is no
+path against the app's content root, and handed to `FileSystemService` as a constructor argument. There is no
 options class. The checked-in default is `.`, the project directory, so the app runs out of the box; missing
 or non-existent directories fail at startup.
 
 **Why:** One value does not justify an options class and `IOptions<T>` plumbing. Taking the directory as a
-constructor string keeps `DirectoryLister` free of framework types, so tests build it directly against a
+constructor string keeps `FileSystemService` free of framework types, so tests build it directly against a
 temp directory. Resolving relative values against the content root rather than the working directory makes
 the behaviour independent of where `dotnet run` is invoked from. Failing fast at startup surfaces
 misconfiguration immediately instead of on the first request.
 
 ## 5. Listings return paths relative to the base directory
 
-**Decision:** `DirectoryLister.List()` returns entries as paths relative to the base directory, sorted
+**Decision:** `FileSystemService.ListDirectory()` returns entries as paths relative to the base directory, sorted
 ordinally, and never exposes the absolute location of the base.
 
 **Why:** The base directory is a server-side detail; clients only need to address entries within it, and
@@ -73,7 +73,7 @@ is harmless because they cannot reach anything outside the base.
 
 ## 7. Listing endpoint returns a bare JSON array; the controller maps the lister's exceptions to status codes
 
-**Decision:** `GET /api/dir?path=<relative path>` returns the entries from `DirectoryLister.List` directly,
+**Decision:** `GET /api/dir?path=<relative path>` returns the entries from `FileSystemService.ListDirectory` directly,
 serialised as a JSON array of strings such as `["notes.txt","photos"]`, with no wrapping object. The
 controller catches the two exceptions the lister documents and maps `ArgumentException` (path escapes
 the base) to 400 and `DirectoryNotFoundException` to 404; nothing else is caught, so unexpected failures
@@ -85,5 +85,5 @@ maintain for no information gain; if a listing later needs metadata (counts, siz
 into an object at that point. Mapping exceptions inside the one action rather than in a global exception
 filter keeps the mapping next to the code that knows what those exceptions mean; a filter becomes worth
 having once several endpoints share the same mapping. Because the controller holds no logic of its own,
-its tests call the action directly against a `DirectoryLister` over a temp directory, which checks the
+its tests call the action directly against a `FileSystemService` over a temp directory, which checks the
 status-code mapping without hosting the app.
