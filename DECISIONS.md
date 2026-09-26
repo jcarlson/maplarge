@@ -121,3 +121,26 @@ maintaining a MIME table by hand; `application/octet-stream` for unknown extensi
 save the file rather than try to render it. The exception-to-status mapping is now repeated in two
 controllers; it is still two small catch blocks, so the exception filter anticipated in decision 7 is
 deferred until a third endpoint makes the duplication worth removing.
+
+## 10. Listings are a `Listing` view model built from `FileSystemInfo`, ordered directories-first on the server
+
+**Decision:** `FileSystemService.ListDirectory` now returns a `Listing` instead of a list of path strings. `Listing`
+is constructed from the base directory and an `IEnumerable<FileSystemInfo>` (what
+`DirectoryInfo.EnumerateFileSystemInfos()` yields) and immediately maps each item to an `Entry(Path, IsDirectory)`
+record, keeping none of the framework objects. An entry is a directory when the info `is DirectoryInfo`, not by
+reading `FileSystemInfo.Attributes`. Entries are ordered directories first, then files, each group in ordinal
+path order. The controller's only change is its return type; `GET /api/dir` now serialises as
+`{"entries":[{"path":"photos","isDirectory":true},{"path":"notes.txt","isDirectory":false}]}`. Decision 5's
+"ordinal order" clause is superseded by the directories-first rule; its "relative to the base" clause stands.
+
+**Why:** The response needs more than a path per entry, and serialising `FileSystemInfo` directly was rejected
+because its `FullName` and `DirectoryName` would leak the absolute base path that decision 8 keeps server-side.
+A view model that maps in its constructor and exposes only plain properties means the controller stays a
+one-line translation and the JSON shape is exactly the model's public surface. The same shape will serve
+search results, which are likewise a set of entries with per-set metadata, so the class is named for what it
+holds rather than for the directory endpoint. Deciding kind by type rather than `Attributes` matters for
+testing: `Attributes` throws for a path that does not exist, whereas `FileInfo` and `DirectoryInfo` can be
+constructed for any path, so `Listing` is unit-tested without touching the disk. Ordering is done on the server
+so the client can render the array as given: the SPA has no test harness (adding one would drag in the build
+tooling the exercise steers away from), so logic is kept in C# where it is tested, and only one display order
+is planned. Recursive directory sizes (`du`-style) are out of scope; a directory listing behaves like `ls`.

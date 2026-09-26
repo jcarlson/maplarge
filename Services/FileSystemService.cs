@@ -1,3 +1,5 @@
+using TestProject.Models;
+
 namespace TestProject.Services {
     /// <summary>
     /// Operations on the files and directories under a fixed base directory. Every path taken
@@ -14,18 +16,14 @@ namespace TestProject.Services {
         }
 
         /// <summary>
-        /// Returns the files and directories directly inside <paramref name="path"/>, a directory
-        /// given relative to the base, as paths relative to the base in ordinal order so results
-        /// are stable across platforms. An empty path or "/" lists the base itself.
+        /// Lists the files and directories directly inside <paramref name="path"/>, a directory
+        /// given relative to the base. An empty path or "/" lists the base itself.
         /// </summary>
         /// <exception cref="ArgumentException">The path would escape the base directory.</exception>
         /// <exception cref="DirectoryNotFoundException">The directory does not exist under the base.</exception>
-        public IReadOnlyList<string> ListDirectory(string path = "") {
-            var directory = _paths.Resolve(path);
-            return Directory.EnumerateFileSystemEntries(directory)
-                .Select(entry => Path.GetRelativePath(_paths.BaseDirectory, entry))
-                .Order(StringComparer.Ordinal)
-                .ToList();
+        public Listing ListDirectory(string path = "") {
+            var directory = new DirectoryInfo(_paths.Resolve(path));
+            return new Listing(_paths.BaseDirectory, directory.EnumerateFileSystemInfos());
         }
 
         /// <summary>

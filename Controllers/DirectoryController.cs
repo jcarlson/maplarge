@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using TestProject.Models;
 using TestProject.Services;
 
 namespace TestProject.Controllers {
@@ -17,13 +18,13 @@ namespace TestProject.Controllers {
 
         /// <summary>
         /// GET /api/dir?path=photos — lists the entries directly inside <paramref name="path"/>
-        /// as a JSON array of base-relative paths. Omitting <c>path</c> lists the base itself.
+        /// as a JSON <see cref="Listing"/>. Omitting <c>path</c> lists the base itself.
         /// </summary>
         /// <returns>
-        /// 200 with the entries; 400 if the path escapes the base; 404 if the directory does not exist.
+        /// 200 with the listing; 400 if the path escapes the base; 404 if the directory does not exist.
         /// </returns>
         [HttpGet]
-        public ActionResult<IReadOnlyList<string>> List([FromQuery] string path = "") {
+        public ActionResult<Listing> List([FromQuery] string path = "") {
             try {
                 return Ok(_fileSystem.ListDirectory(path));
             } catch (ArgumentException) {

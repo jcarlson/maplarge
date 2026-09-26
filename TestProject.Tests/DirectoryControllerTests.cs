@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TestProject.Controllers;
+using TestProject.Models;
 using TestProject.Services;
 
 namespace TestProject.Tests {
@@ -23,14 +24,17 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void List_DefaultPath_ReturnsOkWithBaseEntries() {
+        public void List_DefaultPath_ReturnsOkWithBaseListing() {
             File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "");
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
 
             var result = _controller.List();
 
             var ok = Assert.IsType<OkObjectResult>(result.Result);
-            Assert.Equal(new[] { "notes.txt", "photos" }, Assert.IsAssignableFrom<IReadOnlyList<string>>(ok.Value));
+            var listing = Assert.IsType<Listing>(ok.Value);
+            Assert.Equal(
+                new[] { new Entry("photos", IsDirectory: true), new Entry("notes.txt", IsDirectory: false) },
+                listing.Entries);
         }
 
         [Fact]
@@ -41,7 +45,8 @@ namespace TestProject.Tests {
             var result = _controller.List("photos");
 
             var ok = Assert.IsType<OkObjectResult>(result.Result);
-            Assert.Equal(new[] { Path.Combine("photos", "cat.jpg") }, Assert.IsAssignableFrom<IReadOnlyList<string>>(ok.Value));
+            var listing = Assert.IsType<Listing>(ok.Value);
+            Assert.Equal(new[] { new Entry(Path.Combine("photos", "cat.jpg"), IsDirectory: false) }, listing.Entries);
         }
 
         [Fact]
