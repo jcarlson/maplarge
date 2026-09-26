@@ -66,6 +66,10 @@ dotnet run --launch-profile TestProject   # same as `dotnet run` (profile from P
 Unit tests (xUnit) live in `TestProject.Tests/`. Run them with `dotnet test`, or use
 `dotnet test --filter "FullyQualifiedName~ClassName.MethodName"` to run a single test.
 
+JavaScript unit tests live in `TestProject.Tests/js/` as `*.test.js` files and run on Node's built-in
+runner (see `DECISIONS.md` #14): `node --test` from the repo root, or `node --test path/to/x.test.js`
+for one file. Node 22+ is needed only for these tests, never to build or run the app.
+
 
 ## Structure
 
@@ -85,6 +89,8 @@ Unit tests (xUnit) live in `TestProject.Tests/`. Run them with `dotnet test`, or
   whose name contains `q` (case-insensitive) via `FileSystemService.Search`, returned as a JSON `Listing`
   (400 if `q` is missing or blank).
 - `wwwroot/index.html` — placeholder page, launched by default (`launchUrl: index.html`).
+- `wwwroot/js/app.js` — the `App` class, the root of the SPA; `start()` is what the entry-point module
+  will call once the page has loaded. Its tests are in `TestProject.Tests/js/app.test.js`.
 - `Models/Listing.cs` — the API's view of a set of entries: `Listing` (built from `Entry` values, exposing
   `Entries` and `TotalSize`) and the `Entry(Path, IsDirectory, Size)` record, whose static `From` builds one
   from the base directory and a `FileSystemInfo` (the only place a `FileSystemInfo` is read). Entries are
@@ -100,7 +106,8 @@ Unit tests (xUnit) live in `TestProject.Tests/`. Run them with `dotnet test`, or
 - `Services/PathResolver.cs` — maps client-supplied relative paths to absolute paths inside the base;
   normalises the path and rejects anything that escapes the base. Pure string logic, no filesystem access.
 - `TestProject.Tests/` — xUnit test project, excluded from the web project's default source globs via
-  `DefaultItemExcludes` in `TestProject.csproj`.
+  `DefaultItemExcludes` in `TestProject.csproj`. Its `js/` folder holds the Node tests for `wwwroot/js`,
+  kept here rather than under `wwwroot` so they are never served as static files.
 - `appsettings.json` — the single config file. `FileBrowser:BaseDirectory` is the browsable root (relative
   values resolve against the content root); override with the `FileBrowser__BaseDirectory` environment
   variable.
