@@ -1,0 +1,32 @@
+# .NET build output
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.swp
+
+# Test and coverage results
+TestResults/
+*.trx
+coverage*.json
+coverage*.xml
+*.coverage
+
+# IDE
+.idea/
+.vs/
+.vscode/
+*.DotSettings.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (if a TypeScript toolchain is added for wwwroot)
+node_modules/
+
+# Local secrets and environment overrides
+appsettings.*.local.json
+.env
+.env.*
