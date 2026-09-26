@@ -36,7 +36,7 @@ The project targets `net8.0`; the installed SDK is .NET 10, which builds it fine
 
 ```bash
 dotnet build                      # build
-dotnet run                        # run; serves https://localhost:7146 and http://localhost:5120
+dotnet run                        # run; serves http://localhost:5120
 dotnet watch run                  # hot reload during development
 dotnet run --launch-profile TestProject   # same as `dotnet run` (profile from Properties/launchSettings.json)
 ```
@@ -47,16 +47,18 @@ There are no tests yet. If a test project is added, use `dotnet test` and
 
 ## Structure
 
-- `Program.cs` — minimal host: `AddControllers()`, `UseHttpsRedirection()`, `UseStaticFiles()`,
-  `MapControllers()`. Static files are served from `wwwroot/`, so the SPA is just `wwwroot/index.html` plus
+- `Program.cs` — minimal host: `AddControllers()`, `UseStaticFiles()`, `MapControllers()`. HTTP only; see
+  `DECISIONS.md`. Static files are served from `wwwroot/`, so the SPA is just `wwwroot/index.html` plus
   whatever JS/TS is added alongside it.
 - `Controllers/TestController.cs` — placeholder API controller (`GET /Test` returns a string). Attribute-routed
   via `[Route("[controller]")]`. Replace or delete it; it exists only as a starting point.
 - `wwwroot/index.html` — placeholder page, launched by default (`launchUrl: index.html`).
-- `appsettings*.json` — logging config only so far; the configurable home directory belongs here (bound via
-  `IConfiguration`/options) or in an environment variable.
-- `Properties/launchSettings.json` — the `IIS Express` profile still references `weatherforecast` from the
-  template and is dead; the `TestProject` profile is the one that matters.
+- `appsettings.json` — the single config file (logging only so far); the configurable home directory belongs
+  here (bound via `IConfiguration`/options) or in an environment variable.
+- `Properties/launchSettings.json` — one `TestProject` profile, HTTP only.
+- `DECISIONS.md` — numbered log of architecture decisions with rationale. **Append an entry whenever a
+  non-obvious design choice is made** (scope cuts, API shape, data model, performance trade-offs). Reviewers
+  read it alongside the Git history.
 
 Nullable reference types and implicit usings are enabled in the csproj.
 
