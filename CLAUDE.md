@@ -75,6 +75,9 @@ Unit tests (xUnit) live in `TestProject.Tests/`. Run them with `dotnet test`, or
 - `Controllers/DirectoryController.cs` — the JSON API, routed under `/api/dir`. `GET /api/dir?path=` lists a
   directory via `FileSystemService` as a JSON array of base-relative paths (400 if the path escapes the base,
   404 if it does not exist).
+- `Controllers/FileController.cs` — `GET /api/file?path=` serves a file via `FileSystemService.GetFileInfo`
+  as a physical-file result: attachment named after the file, MIME type from the extension, range
+  requests enabled (400 if the path escapes the base or is missing, 404 if there is no file there).
 - `wwwroot/index.html` — placeholder page, launched by default (`launchUrl: index.html`).
 - `Services/FileSystemService.cs` — the operations on the configured base directory (`ListDirectory`,
   `GetFileInfo`), taking and returning paths relative to the base. Constructed in `Program.cs` from

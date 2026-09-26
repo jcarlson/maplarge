@@ -104,3 +104,20 @@ through Kestrel's sendfile path with no managed-buffer copy, and handles Range r
 download path is available without the service knowing about HTTP. Treating a directory as "no file"
 keeps one exception type meaning 404 for the controller. `FileInfo` also carries the length and timestamps
 that size totals will want later, though that was not the reason for the choice.
+
+## 9. Downloads are served as a physical-file result
+
+**Decision:** `GET /api/file?path=<relative path>` takes the `FileInfo` from `GetFileInfo` and returns
+MVC's `PhysicalFile` result with the file's own name as the attachment name, a MIME type looked up from
+the extension via `FileExtensionContentTypeProvider` (falling back to `application/octet-stream`), and
+range processing enabled. `path` is a required query parameter, so a request without one is rejected
+with 400 by model validation before the action runs. As in the directory endpoint, `ArgumentException`
+maps to 400 and `FileNotFoundException` to 404 inside the action.
+
+**Why:** `PhysicalFile` owns the open and close of the file, streams it through Kestrel's sendfile path
+without copying it through managed buffers, and implements HTTP Range and conditional requests, so it is
+both the simplest and the fastest way to serve a download. Using the framework's extension map avoids
+maintaining a MIME table by hand; `application/octet-stream` for unknown extensions makes the browser
+save the file rather than try to render it. The exception-to-status mapping is now repeated in two
+controllers; it is still two small catch blocks, so the exception filter anticipated in decision 7 is
+deferred until a third endpoint makes the duplication worth removing.
