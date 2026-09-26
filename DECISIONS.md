@@ -55,3 +55,18 @@ ordinally, and never exposes the absolute location of the base.
 **Why:** The base directory is a server-side detail; clients only need to address entries within it, and
 hiding the absolute prefix avoids leaking filesystem layout to the browser. Ordinal sorting makes the output
 deterministic across platforms, since the OS enumeration order is unspecified.
+
+## 6. Client paths are normalised, then checked for containment
+
+**Decision:** A client-supplied path is joined onto the base directory, fully normalised (`.` and `..`
+segments collapsed, repeated and trailing separators removed), and rejected if the result does not lie
+inside the base. `Path.Join` rather than `Path.Combine` is used so a leading `/` cannot replace the base;
+`/foo/bar` and `foo/bar` both mean `<base>/foo/bar`. This lives in `PathResolver`, a class with no
+filesystem dependency, so the rule is unit-tested without creating directories.
+
+**Why:** One general invariant, "the resolved path starts with the base", covers every way of spelling an
+escape without enumerating them. An explicit ban on `.` and `..` segments was considered and dropped: it
+adds a second rule to maintain, and any further special segment someone might worry about (a `~`, a drive
+letter on Windows) is either not expanded by .NET at all or is caught by the same containment check. The
+trade-off is that inputs like `foo/../bar` are accepted and normalised to `bar` rather than rejected, which
+is harmless because they cannot reach anything outside the base.

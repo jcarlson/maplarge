@@ -75,8 +75,10 @@ Unit tests (xUnit) live in `TestProject.Tests/`. Run them with `dotnet test`, or
 - `Controllers/TestController.cs` — placeholder API controller (`GET /Test` returns a string). Attribute-routed
   via `[Route("[controller]")]`. Replace or delete it; it exists only as a starting point.
 - `wwwroot/index.html` — placeholder page, launched by default (`launchUrl: index.html`).
-- `Services/DirectoryLister.cs` — lists the contents of the configured base directory as paths relative to
-  it. Constructed in `Program.cs` from `FileBrowser:BaseDirectory` and registered as a singleton.
+- `Services/DirectoryLister.cs` — lists a directory under the configured base, returning paths relative to
+  the base. Constructed in `Program.cs` from `FileBrowser:BaseDirectory` and registered as a singleton.
+- `Services/PathResolver.cs` — maps client-supplied relative paths to absolute paths inside the base;
+  normalises the path and rejects anything that escapes the base. Pure string logic, no filesystem access.
 - `TestProject.Tests/` — xUnit test project, excluded from the web project's default source globs via
   `DefaultItemExcludes` in `TestProject.csproj`.
 - `appsettings.json` — the single config file. `FileBrowser:BaseDirectory` is the browsable root (relative

@@ -40,6 +40,34 @@ namespace TestProject.Tests {
             Assert.Equal(new[] { "10.txt", "2.txt", "a.txt", "b.txt" }, entries);
         }
 
+        [Theory]
+        [InlineData("photos")]
+        [InlineData("/photos")]
+        [InlineData("photos/")]
+        public void List_Subdirectory_ReturnsEntriesRelativeToBase(string path) {
+            Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos", "2024"));
+            File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg"), "");
+            File.WriteAllText(Path.Combine(_baseDirectory, "unrelated.txt"), "");
+
+            var entries = new DirectoryLister(_baseDirectory).List(path);
+
+            Assert.Equal(new[] { Path.Combine("photos", "2024"), Path.Combine("photos", "cat.jpg") }, entries);
+        }
+
+        [Fact]
+        public void List_MissingSubdirectory_Throws() {
+            var lister = new DirectoryLister(_baseDirectory);
+
+            Assert.Throws<DirectoryNotFoundException>(() => lister.List("nope"));
+        }
+
+        [Fact]
+        public void List_PathEscapingBase_Throws() {
+            var lister = new DirectoryLister(_baseDirectory);
+
+            Assert.Throws<ArgumentException>(() => lister.List("../"));
+        }
+
         [Fact]
         public void List_EmptyDirectory_ReturnsEmptyList() {
             var entries = new DirectoryLister(_baseDirectory).List();
