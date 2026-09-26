@@ -42,6 +42,16 @@ The corollary is that the design grows **organically**: a class, abstraction, or
 concrete need for it appears in the current step, never in anticipation of a later requirement. Let the code stay
 as simple as the features built so far allow, and refactor when the next feature actually demands it.
 
+## Testing
+
+**Every implementation ships with unit tests** in the same commit. A feature is not done until its behaviour is
+covered, and the tests are part of what reviewers evaluate.
+
+Design for testability: keep logic (path resolution, search, size aggregation, validation) in plain classes with
+explicit dependencies, and keep controllers and file-system access thin so the interesting code can be tested
+without a running host or a real directory tree. If a design choice makes something hard to test, treat that as
+a signal to reconsider the design rather than to skip the test.
+
 ## Commands
 
 The project targets `net8.0`; the installed SDK is .NET 10, which builds it fine.
