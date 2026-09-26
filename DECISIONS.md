@@ -359,3 +359,25 @@ form arrives. Giving `App` the view in its constructor means it is complete once
 setter, `setApp`, is the minimum that closes a genuine cycle; `start()` is then only about following the
 URL, and one starts an app, not a view. This
 supersedes decision 15's remark that `App` reads the location: `Router` does.
+
+## 20. A failed load is shown in place of the table, under the breadcrumbs, and `navigate` never rejects
+
+**Decision:** `App.navigate` catches whatever loading a directory or a search throws and calls
+`view.showError(pwd, error)`; it therefore never rejects. The view keeps the breadcrumb bar for the
+directory that failed and puts a message where the table would be. The wording is a pure, tested helper,
+`errorMessage(pwd, error)`: a 404 says there is no directory at that path, a 400 that the path is not one
+the browser can show, any other status that the server could not answer with that status, and anything
+that is not an `ApiError`, such as a request that never reached the server, is reported as "Something
+went wrong" with the error's own message. The search box is reset and the clear link hidden.
+
+**Why:** The requirements say nothing about errors, but a deep-linkable browser will be given links to
+directories that have since been renamed or deleted, and a blank page with an error in the console is
+not an answer. Keeping the breadcrumbs is the recovery path: every ancestor is one click away, and the
+base is always valid. Handling it in `App` rather than the view or the router keeps the decision where
+the other decisions are and where it is tested with a fake API that rejects; it also settles the
+question left by decision 19 of the promise the router's listener drops, since a function that never
+rejects is safe to leave un-awaited. The catch is deliberately broad: a rendering bug would surface as
+a "Something went wrong" message with its text rather than as silence, which is the better failure for
+a user and no worse for a developer, who still has the message. Status codes are translated on the
+client rather than sending messages from the server so the API stays a plain data API and the wording
+can change without touching C#.

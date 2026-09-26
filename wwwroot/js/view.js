@@ -1,4 +1,4 @@
-import { breadcrumbs, directoryHref, listingRows, listingSummary, searchRows } from "./view-helpers.js";
+import { breadcrumbs, directoryHref, errorMessage, listingRows, listingSummary, searchRows } from "./view-helpers.js";
 
 /**
  * The DOM side of the SPA. It renders what the App gives it and reports what the
@@ -70,6 +70,20 @@ export class View {
     }
 
     /**
+     * Shows that loading `pwd` failed, in place of its table. The breadcrumbs stay,
+     * so a directory that does exist is one click away.
+     * @param {string} pwd The directory that could not be shown.
+     * @param {unknown} error What the load threw.
+     */
+    showError(pwd, error) {
+        this._showSearchForm(pwd, "");
+        const message = document.createElement("p");
+        message.className = "error";
+        message.textContent = errorMessage(pwd, error);
+        this._container.replaceChildren(breadcrumbBar(pwd), message);
+    }
+
+    /**
      * Replaces the container with the breadcrumb bar for `pwd` and a table of `rows`,
      * summarised in its footer.
      * @param {string} pwd
@@ -77,19 +91,6 @@ export class View {
      * @param {import("./api-client.js").Entry[]} entries The entries the rows came from.
      */
     _show(pwd, rows, entries) {
-        const nav = document.createElement("nav");
-        breadcrumbs(pwd).forEach(({ name, href }, index) => {
-            if (index > 0) {
-                nav.append(" \u203a ");
-            }
-            const crumb = document.createElement(href ? "a" : "span");
-            if (href) {
-                crumb.href = href;
-            }
-            crumb.textContent = name;
-            nav.append(crumb);
-        });
-
         const body = document.createElement("tbody");
         for (const { name, href, size } of rows) {
             const link = document.createElement("a");
@@ -105,8 +106,28 @@ export class View {
             body,
             section("tfoot", row("td", [counts, totalSize])),
         );
-        this._container.replaceChildren(nav, table);
+        this._container.replaceChildren(breadcrumbBar(pwd), table);
     }
+}
+
+/**
+ * The `<nav>` of breadcrumbs for `pwd`.
+ * @param {string} pwd
+ */
+function breadcrumbBar(pwd) {
+    const nav = document.createElement("nav");
+    breadcrumbs(pwd).forEach(({ name, href }, index) => {
+        if (index > 0) {
+            nav.append(" \u203a ");
+        }
+        const crumb = document.createElement(href ? "a" : "span");
+        if (href) {
+            crumb.href = href;
+        }
+        crumb.textContent = name;
+        nav.append(crumb);
+    });
+    return nav;
 }
 
 /**

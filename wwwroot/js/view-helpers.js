@@ -1,4 +1,4 @@
-import { fileUrl } from "./api-client.js";
+import { ApiError, fileUrl } from "./api-client.js";
 import { serializeState } from "./url-state.js";
 
 /**
@@ -7,6 +7,25 @@ import { serializeState } from "./url-state.js";
  * @property {string} href The link target.
  * @property {string} size The size column.
  */
+
+/**
+ * What to tell the user when loading `pwd` failed. The server's status codes each
+ * have a meaning here (decision 20); anything else, such as a request that never
+ * reached the server, gets its own message.
+ * @param {string} pwd The directory that was being loaded.
+ * @param {unknown} error What the load threw.
+ * @returns {string}
+ */
+export function errorMessage(pwd, error) {
+    if (error instanceof ApiError) {
+        switch (error.status) {
+            case 404: return `There is no directory at ${pwd}.`;
+            case 400: return `${pwd} is not a path this browser can show.`;
+            default: return `The server could not answer (status ${error.status}).`;
+        }
+    }
+    return `Something went wrong: ${error instanceof Error ? error.message : String(error)}`;
+}
 
 /**
  * @typedef {object} Crumb One item in the breadcrumb bar.

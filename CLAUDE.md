@@ -102,8 +102,9 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   the URL names now.
   `navigate(urlState)` searches `pwd` and below when `query.q` is set, otherwise lists `pwd` (the
   server accepts the leading slash), and passes the result to the view's `showSearchResults` or
-  `showListing`. `search(text)` trims the text and moves the router to the same directory with it as
-  `q`, or with no query when blank. It touches neither the location nor the DOM and stores nothing:
+  `showListing`. Whatever the load throws is passed to the view's `showError`, so `navigate` never
+  rejects (decision 20). `search(text)` trims the text and moves the router to the same directory with
+  it as `q`, or with no query when blank. It touches neither the location nor the DOM and stores nothing:
   the hash is the source of truth for state. Tested with fakes for all three dependencies.
 - `wwwroot/js/router.js` — `Router`, the only code that reads or writes `location`, over a `window`
   passed to its constructor: `current()` parses the hash into a `UrlState`, `go(changes)` assigns the
@@ -119,7 +120,8 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   current directory plain text) and a
   `<table>`: a `<thead>` with Name and Size, a `<tbody>` with one row per `listingRows` or `searchRows`
   row (a link with its `href` and `name`, and a cell with its `size`), and a `<tfoot>` row from
-  `listingSummary`, all via `createElement` and `textContent` (never `innerHTML`). Navigation needs no click handlers: a
+  `listingSummary`, all via `createElement` and `textContent` (never `innerHTML`). `showError(pwd,
+  error)` keeps the breadcrumbs and shows `errorMessage` in a `<p class="error">` instead of the table. Navigation needs no click handlers: a
   directory link changes the hash and `main.js` reacts. The view decides nothing itself, so it stays
   thin and untested on Node; anything that needs a decision (formatting, counts) belongs in a pure,
   tested module. The entry-point module owns
@@ -134,7 +136,8 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   here too.
 - `wwwroot/js/view-helpers.js` — pure functions the view calls, tested in
   `TestProject.Tests/js/view-helpers.test.js`. `directoryHref(path)` is the hash link that lists a
-  directory with no search. `breadcrumbs(pwd)` is the breadcrumb bar: the base, then one
+  directory with no search. `errorMessage(pwd, error)` is the wording for a failed load, keyed on the
+  `ApiError` status with a generic fallback (decision 20). `breadcrumbs(pwd)` is the breadcrumb bar: the base, then one
   `{ name, href }` per segment linking to that directory, except the last (the current directory),
   which has no `href`. `listingRows(pwd, entries)` is the row model:
   `.` and `..`

@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { ApiError } from "../../wwwroot/js/api-client.js";
 import { App } from "../../wwwroot/js/app.js";
 
 const entries = [{ path: "photos/cat.jpg", isDirectory: false, size: 12 }];
@@ -59,6 +60,17 @@ function fakeView() {
         showSearchResults(pwd, query, entries) {
             shown.push({ search: { pwd, query, entries } });
         },
+        showError(pwd, error) {
+            shown.push({ error: { pwd, error } });
+        },
+    };
+}
+
+/** A stand-in for ApiClient whose every call rejects with `error`. */
+function failingApi(error) {
+    return {
+        listDirectory: async () => { throw error; },
+        search: async () => { throw error; },
     };
 }
 
@@ -131,4 +143,31 @@ test("search with blank text drops the query", async () => {
     app.search("   ");
 
     assert.deepEqual(router.went, [{ query: {} }]);
+});
+
+test("a failed listing is shown as an error for that directory, and navigate resolves", async () => {
+    const error = new ApiError(404, "/api/dir?path=%2Fnope");
+    const view = fakeView();
+
+    await startedApp({ api: failingApi(error), router: fakeRouter({ pwd: "/nope", query: {} }), view });
+
+    assert.deepEqual(view.shown, [{ error: { pwd: "/nope", error } }]);
+});
+
+test("a failed search is shown as an error for the directory searched", async () => {
+    const error = new ApiError(404, "/api/search?path=%2Fnope&q=cat");
+    const view = fakeView();
+
+    await startedApp({ api: failingApi(error), router: fakeRouter({ pwd: "/nope", query: { q: "cat" } }), view });
+
+    assert.deepEqual(view.shown, [{ error: { pwd: "/nope", error } }]);
+});
+
+test("a request that never reaches the server is shown as an error too", async () => {
+    const error = new TypeError("Failed to fetch");
+    const view = fakeView();
+
+    await startedApp({ api: failingApi(error), view });
+
+    assert.deepEqual(view.shown, [{ error: { pwd: "/", error } }]);
 });

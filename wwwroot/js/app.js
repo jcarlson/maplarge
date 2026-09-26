@@ -31,15 +31,22 @@ export class App {
      * Responds to a navigation: with a `q` in the query it searches the directory
      * and below, otherwise it lists the directory, and shows the result. The server
      * accepts `pwd` as is, since a leading slash means the base directory to it too.
+     * Whatever goes wrong, an `ApiError` such as a 404 or a failed request, is shown
+     * in the view for that directory instead; this never rejects, so the router's
+     * listener can drop the promise.
      * @param {import("./url-state.js").UrlState} urlState The parsed URL state to move to.
      */
     async navigate({ pwd, query }) {
-        if (query.q) {
-            const entries = await this._api.search(pwd, query.q);
-            this._view.showSearchResults(pwd, query.q, entries);
-        } else {
-            const entries = await this._api.listDirectory(pwd);
-            this._view.showListing(pwd, entries);
+        try {
+            if (query.q) {
+                const entries = await this._api.search(pwd, query.q);
+                this._view.showSearchResults(pwd, query.q, entries);
+            } else {
+                const entries = await this._api.listDirectory(pwd);
+                this._view.showListing(pwd, entries);
+            }
+        } catch (error) {
+            this._view.showError(pwd, error);
         }
     }
 
@@ -60,4 +67,5 @@ export class App {
  * @property {(app: App) => void} setApp Where to report the user's actions.
  * @property {(pwd: string, entries: import("./api-client.js").Entry[]) => void} showListing
  * @property {(pwd: string, query: string, entries: import("./api-client.js").Entry[]) => void} showSearchResults
+ * @property {(pwd: string, error: unknown) => void} showError
  */

@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { breadcrumbs, directoryHref, entryHref, entryName, entrySize, formatSize, listingRows, listingSummary, parentPath, searchRows } from "../../wwwroot/js/view-helpers.js";
+import { ApiError } from "../../wwwroot/js/api-client.js";
+import { breadcrumbs, directoryHref, entryHref, entryName, entrySize, errorMessage, formatSize, listingRows, listingSummary, parentPath, searchRows } from "../../wwwroot/js/view-helpers.js";
 
 const directory = { path: "photos/2024 summer", isDirectory: true, size: null };
 const file = { path: "photos/cat.jpg", isDirectory: false, size: 12 };
@@ -125,4 +126,15 @@ test("listingSummary uses the singular for one and the plural for zero", () => {
 
 test("listingSummary totals zero for no files, ignoring directories", () => {
     assert.equal(listingSummary([directory]).totalSize, "0 B");
+});
+
+test("errorMessage explains each API status in terms of the directory", () => {
+    assert.equal(errorMessage("/nope", new ApiError(404, "/api/dir")), "There is no directory at /nope.");
+    assert.equal(errorMessage("/../x", new ApiError(400, "/api/dir")), "/../x is not a path this browser can show.");
+    assert.equal(errorMessage("/", new ApiError(503, "/api/dir")), "The server could not answer (status 503).");
+});
+
+test("errorMessage falls back to the error's own message for anything else", () => {
+    assert.equal(errorMessage("/", new TypeError("Failed to fetch")), "Something went wrong: Failed to fetch");
+    assert.equal(errorMessage("/", "boom"), "Something went wrong: boom");
 });
