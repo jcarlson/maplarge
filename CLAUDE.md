@@ -93,20 +93,26 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   `<script type="module" src="js/main.js">` tag in the head (module scripts are deferred, so it runs
   after the DOM is parsed), the `<form id="search">` with its `q` input, submit button and clear link,
   and the `<main id="listing">` container the view renders into.
-- `wwwroot/js/main.js` — the entry point and the only module that reads the browser's location: it
-  builds the `ApiClient` over the window's `fetch` and the `View` over the container and search form,
-  constructs the `App` with both, and parses `location.hash` with `parseState` into a `navigate` call,
-  once on load and on every `hashchange`. A submitted search is turned into a hash change via
-  `mergeState` (same `pwd`, the trimmed text as `q`, or no query when empty), so it flows through the
-  same path as a link.
-  Deliberately thin and untested, per decision 14.
-- `wwwroot/js/app.js` — the `App` class, the root of the SPA, constructed with an `ApiClient` and a
-  view. `navigate(urlState)` searches `pwd` and below when `query.q` is set, otherwise lists `pwd`
-  (the server accepts the leading slash), and passes the result to the view's `showSearchResults` or
-  `showListing`. It touches neither the location nor the DOM and stores nothing: the hash is the source
-  of truth for state. Tested with fakes for both dependencies.
+- `wwwroot/js/main.js` — the entry point, wiring only: builds the `ApiClient` over the window's `fetch`,
+  the `Router` over `window`, the `View` over the container and search form, and the `App` over all
+  three, then awaits `app.start()`. Untested, per decision 14.
+- `wwwroot/js/app.js` — the `App` class, the root of the SPA: what the URL means and what the user's
+  actions do. Constructed with an `ApiClient`, a `Router` and a `View`, which it gives itself via
+  `setApp` (decision 19). `start()` subscribes to the router and returns the navigation to the state
+  the URL names now.
+  `navigate(urlState)` searches `pwd` and below when `query.q` is set, otherwise lists `pwd` (the
+  server accepts the leading slash), and passes the result to the view's `showSearchResults` or
+  `showListing`. `search(text)` trims the text and moves the router to the same directory with it as
+  `q`, or with no query when blank. It touches neither the location nor the DOM and stores nothing:
+  the hash is the source of truth for state. Tested with fakes for all three dependencies.
+- `wwwroot/js/router.js` — `Router`, the only code that reads or writes `location`, over a `window`
+  passed to its constructor: `current()` parses the hash into a `UrlState`, `go(changes)` assigns the
+  merged hash (a history entry, and a `hashchange`), and `listen(callback)` reports the new state on
+  every `hashchange`. Decides nothing. Tested with a fake window in `TestProject.Tests/js/router.test.js`.
 - `wwwroot/js/view.js` — `View`, the DOM side: constructed with a container element and the search
-  form. `showListing(pwd, entries)` and `showSearchResults(pwd, query, entries)` fill the search box
+  form, whose submit it handles by calling `app.search` with the box's text, once `setApp` has given it
+  an app (before that a submit goes nowhere).
+  `showListing(pwd, entries)` and `showSearchResults(pwd, query, entries)` fill the search box
   (empty for a listing, the query for results, so a deep link arrives filled in), point the clear link
   at `directoryHref(pwd)` and show it only during a search, then replace the container's contents with a
   `<nav>` of `breadcrumbs` (the base, then each segment, separated by `›`; ancestors are links, the

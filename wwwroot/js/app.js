@@ -1,18 +1,30 @@
 /**
- * The file browser application. It reacts to navigation by loading what the URL
- * names, a directory's listing or a search within it, and handing it to the view.
- * The entry module owns the browser's location and translates each change into a
- * `navigate` call; the view owns the DOM. App itself touches neither, so it is
- * tested with fakes.
+ * The file browser application: what the URL means and what happens when the user
+ * acts. It reacts to navigation by loading what the URL names, a directory's
+ * listing or a search within it, and handing it to the view; a search typed by the
+ * user becomes a new URL state. The router owns the location and the view owns the
+ * DOM; App touches neither, so it is tested with fakes for all three dependencies.
  */
 export class App {
     /**
      * @param {import("./api-client.js").ApiClient} api
-     * @param {View} view
+     * @param {import("./router.js").Router} router
+     * @param {View} view Rendered into, and told about this app so it can report the user's actions.
      */
-    constructor(api, view) {
+    constructor(api, router, view) {
         this._api = api;
+        this._router = router;
         this._view = view;
+        view.setApp(this);
+    }
+
+    /**
+     * Follows the URL: every later change navigates, and the state it names now is
+     * shown before this resolves.
+     */
+    async start() {
+        this._router.listen(state => this.navigate(state));
+        await this.navigate(this._router.current());
     }
 
     /**
@@ -30,10 +42,22 @@ export class App {
             this._view.showListing(pwd, entries);
         }
     }
+
+    /**
+     * The user asked to search the current directory for `text`. That is a change
+     * of URL state, keeping the directory and setting the query, or dropping the
+     * query when the text is blank, so it navigates like a link and can be deep-linked.
+     * @param {string} text As typed; surrounding whitespace is ignored.
+     */
+    search(text) {
+        const q = text.trim();
+        this._router.go({ query: q ? { q } : {} });
+    }
 }
 
 /**
  * @typedef {object} View What App needs from the DOM side.
+ * @property {(app: App) => void} setApp Where to report the user's actions.
  * @property {(pwd: string, entries: import("./api-client.js").Entry[]) => void} showListing
  * @property {(pwd: string, query: string, entries: import("./api-client.js").Entry[]) => void} showSearchResults
  */

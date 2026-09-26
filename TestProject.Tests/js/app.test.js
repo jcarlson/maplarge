@@ -20,11 +20,39 @@ function fakeApi() {
     };
 }
 
-/** A stand-in for View that records what it was asked to show. */
+/**
+ * A stand-in for Router at a given state. It records `go` calls and lets a test
+ * raise a change through `change`.
+ * @param {import("../../wwwroot/js/url-state.js").UrlState} state
+ */
+function fakeRouter(state = { pwd: "/", query: {} }) {
+    const went = [];
+    let listener;
+    return {
+        went,
+        current: () => state,
+        go(changes) {
+            went.push(changes);
+        },
+        listen(callback) {
+            listener = callback;
+        },
+        change(newState) {
+            state = newState;
+            return listener(newState);
+        },
+    };
+}
+
+/** A stand-in for View that records the app it was given and what it was asked to show. */
 function fakeView() {
     const shown = [];
     return {
         shown,
+        app: undefined,
+        setApp(app) {
+            this.app = app;
+        },
         showListing(pwd, entries) {
             shown.push({ listing: { pwd, entries } });
         },
@@ -34,52 +62,73 @@ function fakeView() {
     };
 }
 
-test("navigate lists the directory the URL state points at", async () => {
-    const api = fakeApi();
-    const app = new App(api, fakeView());
+/** An App built as main.js builds it, with the initial navigation done. */
+async function startedApp({ api = fakeApi(), router = fakeRouter(), view = fakeView() } = {}) {
+    const app = new App(api, router, view);
+    await app.start();
+    return app;
+}
 
-    await app.navigate({ pwd: "/photos", query: {} });
+test("constructing an App gives the view the app to report to", () => {
+    const view = fakeView();
 
-    assert.deepEqual(api.calls, [{ listDirectory: "/photos" }]);
+    const app = new App(fakeApi(), fakeRouter(), view);
+
+    assert.equal(view.app, app);
 });
 
-test("navigate shows the entries it loaded, with the directory they are in", async () => {
+test("start navigates to the state the URL names now", async () => {
+    const api = fakeApi();
     const view = fakeView();
-    const app = new App(fakeApi(), view);
 
-    await app.navigate({ pwd: "/photos", query: {} });
+    await startedApp({ api, router: fakeRouter({ pwd: "/photos", query: {} }), view });
 
+    assert.deepEqual(api.calls, [{ listDirectory: "/photos" }]);
     assert.deepEqual(view.shown, [{ listing: { pwd: "/photos", entries } }]);
 });
 
-test("navigate with a q searches the directory and shows the results", async () => {
+test("start follows every later URL change", async () => {
+    const api = fakeApi();
+    const router = fakeRouter();
+    await startedApp({ api, router });
+
+    await router.change({ pwd: "/docs", query: {} });
+
+    assert.deepEqual(api.calls, [{ listDirectory: "/" }, { listDirectory: "/docs" }]);
+});
+
+test("a state with a q searches the directory and shows the results", async () => {
     const api = fakeApi();
     const view = fakeView();
-    const app = new App(api, view);
 
-    await app.navigate({ pwd: "/photos", query: { q: "cat" } });
+    await startedApp({ api, router: fakeRouter({ pwd: "/photos", query: { q: "cat" } }), view });
 
     assert.deepEqual(api.calls, [{ search: ["/photos", "cat"] }]);
     assert.deepEqual(view.shown, [{ search: { pwd: "/photos", query: "cat", entries } }]);
 });
 
-test("navigate with an empty q lists rather than searches", async () => {
+test("a state with an empty q lists rather than searches", async () => {
     const api = fakeApi();
-    const app = new App(api, fakeView());
 
-    await app.navigate({ pwd: "/photos", query: { q: "" } });
+    await startedApp({ api, router: fakeRouter({ pwd: "/photos", query: { q: "" } }) });
 
     assert.deepEqual(api.calls, [{ listDirectory: "/photos" }]);
 });
 
-test("each navigation lists and shows its own directory", async () => {
-    const api = fakeApi();
-    const view = fakeView();
-    const app = new App(api, view);
+test("search moves to the same directory with the trimmed text as the query", async () => {
+    const router = fakeRouter({ pwd: "/photos", query: {} });
+    const app = await startedApp({ router });
 
-    await app.navigate({ pwd: "/photos", query: {} });
-    await app.navigate({ pwd: "/", query: {} });
+    app.search("  cat ");
 
-    assert.deepEqual(api.calls, [{ listDirectory: "/photos" }, { listDirectory: "/" }]);
-    assert.equal(view.shown.length, 2);
+    assert.deepEqual(router.went, [{ query: { q: "cat" } }]);
+});
+
+test("search with blank text drops the query", async () => {
+    const router = fakeRouter({ pwd: "/photos", query: { q: "cat" } });
+    const app = await startedApp({ router });
+
+    app.search("   ");
+
+    assert.deepEqual(router.went, [{ query: {} }]);
 });

@@ -335,3 +335,27 @@ query is present. Scoping also makes clearing a search trivial, a link back to t
 no query, and it is the cheaper search since it walks only the subtree; a global search remains one
 click away, from the base. This is the `path` parameter decision 13 deferred until the UI needed it;
 the order `(path, query)` follows the other service methods, which take the directory first.
+
+## 19. `Router` owns the location, `View` the DOM, `App` the meaning; `main.js` only wires them
+
+**Decision:** The browser is reached through two thin adapters. `Router` (`wwwroot/js/router.js`) is
+the only code that touches `location`: it parses the hash into a `UrlState`, assigns a merged hash, and
+reports each `hashchange`, over a `window` passed to its constructor. `View` is the only code that
+touches the DOM: it renders what it is given and reports a submitted search to the App. Every decision
+sits in `App`: `start()` subscribes to the router and navigates to the state the URL names now;
+`navigate` chooses listing or search; `search(text)` turns the user's text into a URL change, dropping
+the query when blank. `App` takes the `ApiClient`, the `Router` and the `View` in its constructor.
+`App` and `View` need each other; the view is built first, knowing no app, and the App's constructor
+closes the loop with `view.setApp(this)`. Until then the view's event reports go nowhere
+(`this._app?.search(...)`). `main.js` builds the four objects and awaits `app.start()`, nothing else.
+
+**Why:** The location is a dependency like the API, and while it had no object of its own the logic
+about it (parsing, merging, what a submit means) accumulated in whichever module touched it, first
+`main.js` and then `View`, both of which decision 14 leaves untested. Giving it a `Router` moves that
+logic into `App`, where it is tested with fakes: the App tests drive a fake router through a state
+change and assert what `search` asks the router to do, and the router itself is tested with a fake
+window. `View` shrinks back to rendering plus one event report, registered in its constructor where the
+form arrives. Giving `App` the view in its constructor means it is complete once built, and the one
+setter, `setApp`, is the minimum that closes a genuine cycle; `start()` is then only about following the
+URL, and one starts an app, not a view. This
+supersedes decision 15's remark that `App` reads the location: `Router` does.

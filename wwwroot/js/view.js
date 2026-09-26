@@ -1,12 +1,16 @@
 import { breadcrumbs, directoryHref, listingRows, listingSummary, searchRows } from "./view-helpers.js";
 
 /**
- * Renders a listing into a container element. This is the DOM side of the SPA:
- * it copies what it is given onto elements and decides nothing itself, so it
- * stays thin and is left untested on Node (decision 14). Text goes through
- * `textContent`, never `innerHTML`, so file names cannot inject markup.
+ * The DOM side of the SPA. It renders what the App gives it and reports what the
+ * user does (a submitted search) to the App. It copies values onto elements and
+ * decides nothing itself, so it stays thin and is left untested on Node (decision
+ * 14). Text goes through `textContent`, never `innerHTML`, so file names cannot
+ * inject markup.
  */
 export class View {
+    /** @type {import("./app.js").App | undefined} */
+    _app;
+
     /**
      * @param {HTMLElement} container The element whose contents the view replaces.
      * @param {HTMLFormElement} searchForm The form with the `q` input and the clear link.
@@ -14,6 +18,19 @@ export class View {
     constructor(container, searchForm) {
         this._container = container;
         this._searchForm = searchForm;
+        searchForm.addEventListener("submit", event => {
+            event.preventDefault();
+            this._app?.search(searchForm.elements.q.value);
+        });
+    }
+
+    /**
+     * Sets the app the user's actions are reported to; until then they go nowhere.
+     * Called by the App's constructor, which closes the loop between the two.
+     * @param {import("./app.js").App} app
+     */
+    setApp(app) {
+        this._app = app;
     }
 
     /**
