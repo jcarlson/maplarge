@@ -91,6 +91,10 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
 - `wwwroot/index.html` — placeholder page, launched by default (`launchUrl: index.html`).
 - `wwwroot/js/app.js` — the `App` class, the root of the SPA; `start()` is what the entry-point module
   will call once the page has loaded. Its tests are in `TestProject.Tests/js/app.test.js`.
+- `wwwroot/js/api-client.js` — `ApiClient`, the browser's view of the JSON API, with `fetch` injected
+  through the constructor so tests pass a fake. `listDirectory(path)` calls `GET /api/dir` and resolves
+  to the `Listing`; a non-2xx status rejects with an `ApiError` carrying the HTTP status. The JSDoc
+  typedefs for `Listing` and `Entry` live here too.
 - `Models/Listing.cs` — the API's view of a set of entries: `Listing` (built from `Entry` values, exposing
   `Entries` and `TotalSize`) and the `Entry(Path, IsDirectory, Size)` record, whose static `From` builds one
   from the base directory and a `FileSystemInfo` (the only place a `FileSystemInfo` is read). Entries are

@@ -1,0 +1,61 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { ApiClient, ApiError } from "../../wwwroot/js/api-client.js";
+
+/**
+ * A fake `fetch` that records the URL it was asked for and answers with `body` as JSON.
+ * @param {number} status
+ * @param {unknown} [body]
+ */
+function fakeFetch(status, body) {
+    const calls = [];
+    const fetch = async (url) => {
+        calls.push(url);
+        return new Response(JSON.stringify(body ?? null), {
+            status,
+            headers: { "Content-Type": "application/json" },
+        });
+    };
+    return { fetch, calls };
+}
+
+const listing = {
+    entries: [
+        { path: "photos", isDirectory: true, size: null },
+        { path: "notes.txt", isDirectory: false, size: 12 },
+    ],
+    totalSize: 12,
+};
+
+test("listDirectory requests /api/dir with the path as a query parameter", async () => {
+    const { fetch, calls } = fakeFetch(200, listing);
+
+    await new ApiClient(fetch).listDirectory("photos/2024 summer");
+
+    assert.deepEqual(calls, ["/api/dir?path=photos%2F2024+summer"]);
+});
+
+test("listDirectory sends an empty path for the base directory", async () => {
+    const { fetch, calls } = fakeFetch(200, listing);
+
+    await new ApiClient(fetch).listDirectory("");
+
+    assert.deepEqual(calls, ["/api/dir?path="]);
+});
+
+test("listDirectory returns the listing the server sent", async () => {
+    const { fetch } = fakeFetch(200, listing);
+
+    const result = await new ApiClient(fetch).listDirectory("");
+
+    assert.deepEqual(result, listing);
+});
+
+test("listDirectory throws an ApiError carrying the status for a non-OK response", async () => {
+    const { fetch } = fakeFetch(404);
+
+    await assert.rejects(
+        () => new ApiClient(fetch).listDirectory("missing"),
+        (error) => error instanceof ApiError && error.status === 404,
+    );
+});
