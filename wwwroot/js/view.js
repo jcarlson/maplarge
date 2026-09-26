@@ -1,4 +1,4 @@
-import { listingRows, listingSummary, searchRows } from "./view-helpers.js";
+import { directoryHref, listingRows, listingSummary, searchRows } from "./view-helpers.js";
 
 /**
  * Renders a listing into a container element. This is the DOM side of the SPA:
@@ -7,28 +7,49 @@ import { listingRows, listingSummary, searchRows } from "./view-helpers.js";
  * `textContent`, never `innerHTML`, so file names cannot inject markup.
  */
 export class View {
-    /** @param {HTMLElement} container The element whose contents the view replaces. */
-    constructor(container) {
+    /**
+     * @param {HTMLElement} container The element whose contents the view replaces.
+     * @param {HTMLFormElement} searchForm The form with the `q` input and the clear link.
+     */
+    constructor(container, searchForm) {
         this._container = container;
+        this._searchForm = searchForm;
     }
 
     /**
-     * Shows a directory's contents.
+     * Shows a directory's contents, with the search box empty.
      * @param {string} pwd The directory being listed, as `UrlState.pwd`.
      * @param {import("./api-client.js").Entry[]} entries
      */
     showListing(pwd, entries) {
+        this._showSearchForm(pwd, "");
         this._showTable(listingRows(pwd, entries), entries);
     }
 
     /**
-     * Shows the matches of a search within a directory.
+     * Shows the matches of a search within a directory, with the search box
+     * holding the query so a deep link arrives with it filled in.
      * @param {string} pwd The directory that was searched, as `UrlState.pwd`.
      * @param {string} query The text that was searched for.
      * @param {import("./api-client.js").Entry[]} entries The matches.
      */
     showSearchResults(pwd, query, entries) {
+        this._showSearchForm(pwd, query);
         this._showTable(searchRows(pwd, entries), entries);
+    }
+
+    /**
+     * Fills the search box with `query` and points the clear link at `pwd` without a
+     * search; the link is shown only while a search is active.
+     * @param {string} pwd
+     * @param {string} query
+     */
+    _showSearchForm(pwd, query) {
+        const form = this._searchForm;
+        form.elements.q.value = query;
+        const clear = form.querySelector("a");
+        clear.href = directoryHref(pwd);
+        clear.hidden = query === "";
     }
 
     /**

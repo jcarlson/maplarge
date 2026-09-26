@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseState, serializeState } from "../../wwwroot/js/url-state.js";
+import { mergeState, parseState, serializeState } from "../../wwwroot/js/url-state.js";
 
 test("parseState reads an empty or bare fragment as the base directory", () => {
     for (const hash of ["", "#", "#/"]) {
@@ -65,4 +65,22 @@ test("serializeState and parseState round-trip", () => {
     for (const state of states) {
         assert.deepEqual(parseState(serializeState(state)), state, JSON.stringify(state));
     }
+});
+
+test("mergeState keeps the directory when only the query changes", () => {
+    assert.equal(mergeState("#/photos/2024", { query: { q: "cat" } }), "#/photos/2024?q=cat");
+});
+
+test("mergeState keeps the query when only the directory changes", () => {
+    assert.equal(mergeState("#/photos?q=cat", { pwd: "/docs" }), "#/docs?q=cat");
+});
+
+test("mergeState replaces the whole query rather than adding to it", () => {
+    assert.equal(mergeState("#/photos?q=cat&sort=size", { query: { q: "dog" } }), "#/photos?q=dog");
+    assert.equal(mergeState("#/photos?q=cat", { query: {} }), "#/photos");
+});
+
+test("mergeState with no changes re-serializes the current state", () => {
+    assert.equal(mergeState("#photos//2024/"), "#/photos/2024");
+    assert.equal(mergeState(""), "#/");
 });

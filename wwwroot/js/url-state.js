@@ -42,6 +42,18 @@ export function serializeState({ pwd, query }) {
 }
 
 /**
+ * The fragment for the current state with `changes` applied: parse `hash`, overwrite
+ * the given fields, serialize. The merge is shallow, so a `query` in `changes`
+ * replaces the whole query rather than adding to it.
+ * @param {string} hash The current fragment, such as `location.hash`.
+ * @param {Partial<UrlState>} [changes] The fields to overwrite.
+ * @returns {string}
+ */
+export function mergeState(hash, changes = {}) {
+    return serializeState({ ...parseState(hash), ...changes });
+}
+
+/**
  * The non-empty segments of a path, so leading, trailing and doubled slashes vanish.
  * @param {string} path
  */

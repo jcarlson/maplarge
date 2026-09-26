@@ -1,9 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { entryHref, entryName, entrySize, formatSize, listingRows, listingSummary, parentPath, searchRows } from "../../wwwroot/js/view-helpers.js";
+import { directoryHref, entryHref, entryName, entrySize, formatSize, listingRows, listingSummary, parentPath, searchRows } from "../../wwwroot/js/view-helpers.js";
 
 const directory = { path: "photos/2024 summer", isDirectory: true, size: null };
 const file = { path: "photos/cat.jpg", isDirectory: false, size: 12 };
+
+test("directoryHref links to a directory's listing with no search", () => {
+    assert.equal(directoryHref("/photos/2024 summer"), "#/photos/2024%20summer");
+    assert.equal(directoryHref("/"), "#/");
+});
 
 test("entryHref: a directory links to its own listing in the hash", () => {
     assert.equal(entryHref(directory), "#/photos/2024%20summer");

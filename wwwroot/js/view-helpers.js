@@ -125,7 +125,12 @@ export function formatSize(bytes) {
     return `${number} ${UNITS[unit]}`;
 }
 
-/** The hash link that lists `path`, with no search. @param {string} path */
-function directoryHref(path) {
+/**
+ * The hash link that lists `path` with no search: an entry's directory, or the
+ * current one when a search is cleared.
+ * @param {string} path
+ * @returns {string}
+ */
+export function directoryHref(path) {
     return serializeState({ pwd: path, query: {} });
 }

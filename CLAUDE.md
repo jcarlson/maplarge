@@ -91,18 +91,24 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   if `q` is missing or blank or `path` escapes the base, 404 if the directory is missing).
 - `wwwroot/index.html` — the SPA's page, launched by default (`launchUrl: index.html`): the
   `<script type="module" src="js/main.js">` tag in the head (module scripts are deferred, so it runs
-  after the DOM is parsed) and the `<main id="listing">` container the view renders into.
+  after the DOM is parsed), the `<form id="search">` with its `q` input, submit button and clear link,
+  and the `<main id="listing">` container the view renders into.
 - `wwwroot/js/main.js` — the entry point and the only module that reads the browser's location: it
-  builds the `ApiClient` over the window's `fetch` and the `View` over the container, constructs
-  the `App` with both, and parses `location.hash` with `parseState` into a `navigate` call, once on load
-  and on every `hashchange`. Deliberately thin and untested, per decision 14.
+  builds the `ApiClient` over the window's `fetch` and the `View` over the container and search form,
+  constructs the `App` with both, and parses `location.hash` with `parseState` into a `navigate` call,
+  once on load and on every `hashchange`. A submitted search is turned into a hash change via
+  `mergeState` (same `pwd`, the trimmed text as `q`, or no query when empty), so it flows through the
+  same path as a link.
+  Deliberately thin and untested, per decision 14.
 - `wwwroot/js/app.js` — the `App` class, the root of the SPA, constructed with an `ApiClient` and a
   view. `navigate(urlState)` searches `pwd` and below when `query.q` is set, otherwise lists `pwd`
   (the server accepts the leading slash), and passes the result to the view's `showSearchResults` or
   `showListing`. It touches neither the location nor the DOM and stores nothing: the hash is the source
   of truth for state. Tested with fakes for both dependencies.
-- `wwwroot/js/view.js` — `View`, the DOM side: constructed with a container element,
-  `showListing(pwd, entries)` and `showSearchResults(pwd, query, entries)` replace its contents with a
+- `wwwroot/js/view.js` — `View`, the DOM side: constructed with a container element and the search
+  form. `showListing(pwd, entries)` and `showSearchResults(pwd, query, entries)` fill the search box
+  (empty for a listing, the query for results, so a deep link arrives filled in), point the clear link
+  at `directoryHref(pwd)` and show it only during a search, then replace the container's contents with a
   `<table>`: a `<thead>` with Name and Size, a `<tbody>` with one row per `listingRows` or `searchRows`
   row (a link with its `href` and `name`, and a cell with its `size`), and a `<tfoot>` row from
   `listingSummary`, all via `createElement` and `textContent` (never `innerHTML`). Navigation needs no click handlers: a
@@ -119,7 +125,8 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   fetched). The JSDoc typedef for `Entry` (the client's name for the server's `FileSystemEntry`) lives
   here too.
 - `wwwroot/js/view-helpers.js` — pure functions the view calls, tested in
-  `TestProject.Tests/js/view-helpers.test.js`. `listingRows(pwd, entries)` is the row model: `.` and `..`
+  `TestProject.Tests/js/view-helpers.test.js`. `directoryHref(path)` is the hash link that lists a
+  directory with no search. `listingRows(pwd, entries)` is the row model: `.` and `..`
   (via `parentPath`; the base is its own parent) then one `{ name, href, size }` per entry, built from
   the per-entry helpers (decision 16). `searchRows(pwd, entries)` is the row model for search results:
   no `.` or `..`, and each match named by its path below the searched directory, since matches sit at
@@ -133,8 +140,9 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   binary unit (B, K, M, G, T; 1 K = 1,024 B) that keeps the number under 1,024, with two decimals and
   thousands separators; whole bytes have no decimals.
 - `wwwroot/js/url-state.js` — the `UrlState` `{ pwd, query }` and its URL-fragment form
-  `#/path/to/dir?key=value` (decision 15): `parseState(hash)` and `serializeState(state)`, pure string
-  logic with no DOM access. `pwd` always starts with `/`; `query` is a generic object of the pairs after
+  `#/path/to/dir?key=value` (decision 15): `parseState(hash)`, `serializeState(state)` and
+  `mergeState(hash, changes)` (parse, shallow-overwrite, serialize; a `query` in `changes` replaces the
+  whole query), pure string logic with no DOM access. `pwd` always starts with `/`; `query` is a generic object of the pairs after
   the `?`. Tested in both directions in `TestProject.Tests/js/url-state.test.js`.
 - `Models/FileSystemEntry.cs` — the `FileSystemEntry(Path, IsDirectory, Size)` record, the shape every API
   response is made of, whose static `From` builds one from the base directory and a `FileSystemInfo` (the
