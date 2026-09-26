@@ -88,7 +88,12 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
 - `Controllers/SearchController.cs` — `GET /api/search?q=` finds files and folders anywhere under the base
   whose name contains `q` (case-insensitive) via `FileSystemService.Search`, returned as a JSON `Listing`
   (400 if `q` is missing or blank).
-- `wwwroot/index.html` — placeholder page, launched by default (`launchUrl: index.html`).
+- `wwwroot/index.html` — the SPA's page, launched by default (`launchUrl: index.html`). Still the
+  placeholder body; its only real content is the `<script type="module" src="js/main.js">` tag in the
+  head (module scripts are deferred, so it runs after the DOM is parsed).
+- `wwwroot/js/main.js` — the entry point and the only module that reads the browser's location: it
+  constructs the `App`, parses `location.hash` with `parseState`, and calls `navigate`. Deliberately
+  thin and untested, per decision 14.
 - `wwwroot/js/app.js` — the `App` class, the root of the SPA. It holds the current `State` and
   `navigate(state)` makes a parsed state current; the entry-point module will own `location.hash` and
   call it on each change. Its tests are in `TestProject.Tests/js/app.test.js`.
