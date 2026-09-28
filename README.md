@@ -4,6 +4,9 @@ A file and directory browser for a configurable server-side folder: an ASP.NET C
 single-page app written in plain JavaScript, with no UI framework and no build step. You can browse,
 search, download and upload, and every view is a deep link.
 
+There is a [video walkthrough](https://drive.google.com/file/d/1IRmogGEC45vcM353-wM5Qyq_BK87oL2X/view?usp=sharing)
+of the app and the code if you would rather start there.
+
 ## Notes to the reviewer
 
 A few things worth knowing before you read the code.
