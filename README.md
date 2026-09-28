@@ -47,21 +47,21 @@ status into its own message on the client. Error handling was kept basic on purp
 You need the .NET 8 SDK or newer. Nothing else is required to build or run.
 
 ```bash
-dotnet run
+dotnet run --project TestProject
 ```
 
 Then open <http://localhost:5120/>. The launch profile opens a browser for you when run from an IDE.
 
-The app browses the `public/` directory in the repository by default. It is seeded with a few sample
+The app browses the `TestProject/public/` directory by default. It is seeded with a few sample
 files (a README, some notes, a CSV, two images and the original requirements PDF) so there is
 something to look at, search for and download. Files you upload land there as well; Git ignores
-everything in `public/` except the seed files.
+everything in `TestProject/public/` except the seed files.
 
-To browse a different folder, change `FileBrowser:BaseDirectory` in `appsettings.json` or set the
-`FileBrowser__BaseDirectory` environment variable. Relative paths resolve against the project directory.
+To browse a different folder, change `FileBrowser:BaseDirectory` in `TestProject/appsettings.json` or set the
+`FileBrowser__BaseDirectory` environment variable. Relative paths resolve against the `TestProject/` directory.
 
 ```bash
-FileBrowser__BaseDirectory=/some/other/folder dotnet run
+FileBrowser__BaseDirectory=/some/other/folder dotnet run --project TestProject
 ```
 
 ## Using it
@@ -114,10 +114,10 @@ A path that would escape the base directory is a 400 in every case.
 
 ## Where to look
 
-- `Controllers/`, `Services/` and `Models/` are the server. `PathResolver` is the piece that keeps every
+- `TestProject/` is the web project. `Controllers/`, `Services/` and `Models/` are the server. `PathResolver` is the piece that keeps every
   request inside the base directory; `FileSystemService`, behind `IFileSystemService`, does the file system
   work; the controllers only translate HTTP.
-- `wwwroot/js/` is the client. `app.js` decides what the URL means and what the user's actions do;
+- `TestProject/wwwroot/js/` is the client. `app.js` decides what the URL means and what the user's actions do;
   `router.js` is the only code that touches the location and `view.js` the only code that touches the
   DOM; `url-state.js`, `view-helpers.js` and `api-client.js` are pure and tested.
 - `TestProject.Tests/` holds the xUnit tests and, under `js/`, the Node tests.

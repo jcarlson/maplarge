@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ApiError } from "../../wwwroot/js/api-client.js";
-import { App } from "../../wwwroot/js/app.js";
+import { ApiError } from "../../TestProject/wwwroot/js/api-client.js";
+import { App } from "../../TestProject/wwwroot/js/app.js";
 
 const entries = [{ path: "photos/cat.jpg", isDirectory: false, size: 12 }];
 
@@ -28,7 +28,7 @@ function fakeApi() {
 /**
  * A stand-in for Router at a given state. It records `go` calls and lets a test
  * raise a change through `change`.
- * @param {import("../../wwwroot/js/url-state.js").UrlState} state
+ * @param {import("../../TestProject/wwwroot/js/url-state.js").UrlState} state
  */
 function fakeRouter(state = { pwd: "/", query: {} }) {
     const went = [];

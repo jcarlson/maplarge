@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mergeState, parseState, serializeState } from "../../wwwroot/js/url-state.js";
+import { mergeState, parseState, serializeState } from "../../TestProject/wwwroot/js/url-state.js";
 
 test("parseState reads an empty or bare fragment as the base directory", () => {
     for (const hash of ["", "#", "#/"]) {

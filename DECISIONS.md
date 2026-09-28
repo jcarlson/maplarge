@@ -460,3 +460,19 @@ concrete need for a second implementation. A hand-written stub is used rather th
 for the same reason the tests use no assertion library: one small class the reader can see is worth
 more here than a dependency. Nothing else depends on the interface; the service tests deliberately
 keep the real class, since path resolution and enumeration are what they exist to check.
+
+## 25. The web project and the test project are siblings under the solution
+
+**Decision:** The web project's files move from the repository root into `TestProject/`, beside
+`TestProject.Tests/`, with `TestProject.sln` at the root referencing both. The `DefaultItemExcludes`
+entry that kept the test sources out of the web project's globs is gone, since the projects no longer
+nest. `dotnet build` and `dotnet test` at the root act on the solution as before; `dotnet run` now takes
+`--project TestProject`, and the sample `public/` directory sits inside `TestProject/` because relative
+base directories resolve against the content root.
+
+**Why:** The exercise's starting zip put the project at the root, and the test project was added under
+it, which meant one project's source tree contained another's and needed a glob exclusion to build.
+Two projects side by side under a solution is the layout `dotnet new sln` and `dotnet sln add`
+produce and the one reviewers will expect to open; it removes the exclusion and its comment rather
+than explaining them. `src/` and `tests/` folders were considered and passed over as a level of
+nesting a two-project repository does not need.

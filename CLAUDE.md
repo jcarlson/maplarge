@@ -57,11 +57,15 @@ a signal to reconsider the design rather than to skip the test.
 The project targets `net8.0`; the installed SDK is .NET 10, which builds it fine.
 
 ```bash
-dotnet build                      # build
-dotnet run                        # run; serves http://localhost:5120
-dotnet watch run                  # hot reload during development
-dotnet run --launch-profile TestProject   # same as `dotnet run` (profile from Properties/launchSettings.json)
+dotnet build                                  # build both projects via the solution
+dotnet run --project TestProject              # run; serves http://localhost:5120
+dotnet watch --project TestProject run        # hot reload during development
 ```
+
+The web project is `TestProject/` and the tests are `TestProject.Tests/`, siblings under `TestProject.sln`
+at the root; `dotnet build` and `dotnet test` at the root act on the solution, while `dotnet run` needs
+`--project` because the root holds no project file. The launch profile in
+`TestProject/Properties/launchSettings.json` opens the browser at `/` when run from an IDE.
 
 Unit tests (xUnit) live in `TestProject.Tests/`. Run them with `dotnet test`, or use
 `dotnet test --filter "FullyQualifiedName~ClassName.MethodName"` to run a single test.
@@ -72,6 +76,9 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
 
 
 ## Structure
+
+The web project's files live under `TestProject/`; paths below are relative to it unless they start
+with `TestProject.Tests/`.
 
 - `Program.cs` — minimal host: `AddControllers()`, `UseDefaultFiles()`, `UseStaticFiles()`,
   `MapControllers()`. HTTP only; see `DECISIONS.md`. Static files are served from `wwwroot/`, and `/`
@@ -191,14 +198,14 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   file or directory; the controller maps it to 409.
 - `Services/PathResolver.cs` — maps client-supplied relative paths to absolute paths inside the base;
   normalises the path and rejects anything that escapes the base. Pure string logic, no filesystem access.
-- `TestProject.Tests/` — xUnit test project, excluded from the web project's default source globs via
-  `DefaultItemExcludes` in `TestProject.csproj`. Its `js/` folder holds the Node tests for `wwwroot/js`,
-  kept here rather than under `wwwroot` so they are never served as static files. The controller tests
+- `TestProject.Tests/` — xUnit test project, a sibling of `TestProject/` (decision 25). Its `js/` folder
+  holds the Node tests for `wwwroot/js`, kept here rather than under `wwwroot` so they are never served
+  as static files. The controller tests
   script a `StubFileSystemService` (one settable delegate per operation) so each mapping of a service
   outcome to a status code is tested without a directory on disk; the service tests use real temp
   directories.
 - `appsettings.json` — the single config file. `FileBrowser:BaseDirectory` is the browsable root (relative
-  values resolve against the content root), `public` by default; override with the
+  values resolve against the content root, `TestProject/`), `public` by default; override with the
   `FileBrowser__BaseDirectory` environment variable.
 - `public/` — the default base directory, seeded with sample files to browse, search and download: a
   README, notes, a CSV, an SVG and a PNG, and the original requirements PDF. Uploads land here too, so

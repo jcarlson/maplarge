@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ApiClient, ApiError, fileUrl } from "../../wwwroot/js/api-client.js";
+import { ApiClient, ApiError, fileUrl } from "../../TestProject/wwwroot/js/api-client.js";
 
 /**
  * A fake `fetch` that records the URL it was asked for and answers with `body` as JSON.

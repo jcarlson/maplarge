@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ApiError } from "../../wwwroot/js/api-client.js";
-import { breadcrumbs, directoryHref, entryHref, entryName, entrySize, errorMessage, formatSize, listingRows, listingSummary, parentPath, searchRows, uploadErrorMessage } from "../../wwwroot/js/view-helpers.js";
+import { ApiError } from "../../TestProject/wwwroot/js/api-client.js";
+import { breadcrumbs, directoryHref, entryHref, entryName, entrySize, errorMessage, formatSize, listingRows, listingSummary, parentPath, searchRows, uploadErrorMessage } from "../../TestProject/wwwroot/js/view-helpers.js";
 
 const directory = { path: "photos/2024 summer", isDirectory: true, size: null };
 const file = { path: "photos/cat.jpg", isDirectory: false, size: 12 };

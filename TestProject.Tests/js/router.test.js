@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Router } from "../../wwwroot/js/router.js";
+import { Router } from "../../TestProject/wwwroot/js/router.js";
 
 /**
  * A stand-in for `window` with a hash and a `hashchange` event that `fire` raises.
