@@ -7,9 +7,11 @@ import { mergeState, parseState } from "./url-state.js";
  * dependency so tests can pass a fake with a `location` and `addEventListener`.
  */
 export class Router {
+    #window;
+
     /** @param {Window} window */
     constructor(window) {
-        this._window = window;
+        this.#window = window;
     }
 
     /**
@@ -17,7 +19,7 @@ export class Router {
      * @returns {import("./url-state.js").UrlState}
      */
     current() {
-        return parseState(this._window.location.hash);
+        return parseState(this.#window.location.hash);
     }
 
     /**
@@ -26,7 +28,7 @@ export class Router {
      * @param {Partial<import("./url-state.js").UrlState>} changes
      */
     go(changes) {
-        this._window.location.hash = mergeState(this._window.location.hash, changes);
+        this.#window.location.hash = mergeState(this.#window.location.hash, changes);
     }
 
     /**
@@ -35,6 +37,6 @@ export class Router {
      * @param {(state: import("./url-state.js").UrlState) => void} callback
      */
     listen(callback) {
-        this._window.addEventListener("hashchange", () => callback(this.current()));
+        this.#window.addEventListener("hashchange", () => callback(this.current()));
     }
 }

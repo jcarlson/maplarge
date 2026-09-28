@@ -32,9 +32,11 @@ export function fileUrl(path) {
  * about the DOM; `fetch` is passed in so tests can supply a fake.
  */
 export class ApiClient {
+    #fetch;
+
     /** @param {typeof fetch} fetch */
     constructor(fetch) {
-        this._fetch = fetch;
+        this.#fetch = fetch;
     }
 
     /**
@@ -45,7 +47,7 @@ export class ApiClient {
      * @throws {ApiError} 400 if the path escapes the base, 404 if the directory does not exist.
      */
     async listDirectory(path) {
-        return this._getJson("/api/dir?" + new URLSearchParams({ path }));
+        return this.#getJson("/api/dir?" + new URLSearchParams({ path }));
     }
 
     /**
@@ -58,7 +60,7 @@ export class ApiClient {
      * @throws {ApiError} 400 if the query is blank or the path escapes the base, 404 if the directory does not exist.
      */
     async search(path, query) {
-        return this._getJson("/api/search?" + new URLSearchParams({ path, q: query }));
+        return this.#getJson("/api/search?" + new URLSearchParams({ path, q: query }));
     }
 
     /**
@@ -73,7 +75,7 @@ export class ApiClient {
     async upload(path, file) {
         const body = new FormData();
         body.append("file", file);
-        return this._getJson("/api/file?" + new URLSearchParams({ path }), { method: "POST", body });
+        return this.#getJson("/api/file?" + new URLSearchParams({ path }), { method: "POST", body });
     }
 
     /**
@@ -81,8 +83,8 @@ export class ApiClient {
      * @param {string} url
      * @param {RequestInit} [init] Anything beyond a plain GET.
      */
-    async _getJson(url, init) {
-        const response = await this._fetch(url, init);
+    async #getJson(url, init) {
+        const response = await this.#fetch(url, init);
         if (!response.ok) {
             throw new ApiError(response.status, url);
         }

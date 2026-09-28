@@ -8,8 +8,12 @@ import { breadcrumbs, directoryHref, errorMessage, listingRows, listingSummary, 
  * inject markup.
  */
 export class View {
+    #container;
+    #searchForm;
+    #uploadForm;
+
     /** @type {import("./app.js").App | undefined} */
-    _app;
+    #app;
 
     /**
      * @param {HTMLElement} container The element whose contents the view replaces.
@@ -17,16 +21,16 @@ export class View {
      * @param {HTMLFormElement} uploadForm The form with the `file` input and a `status` output.
      */
     constructor(container, searchForm, uploadForm) {
-        this._container = container;
-        this._searchForm = searchForm;
-        this._uploadForm = uploadForm;
+        this.#container = container;
+        this.#searchForm = searchForm;
+        this.#uploadForm = uploadForm;
         searchForm.addEventListener("submit", event => {
             event.preventDefault();
-            this._app?.search(searchForm.elements.q.value);
+            this.#app?.search(searchForm.elements.q.value);
         });
         uploadForm.addEventListener("submit", event => {
             event.preventDefault();
-            this._app?.upload(uploadForm.elements.file.files[0]);
+            this.#app?.upload(uploadForm.elements.file.files[0]);
         });
     }
 
@@ -36,7 +40,7 @@ export class View {
      * @param {import("./app.js").App} app
      */
     setApp(app) {
-        this._app = app;
+        this.#app = app;
     }
 
     /**
@@ -45,8 +49,8 @@ export class View {
      * @param {import("./api-client.js").Entry[]} entries
      */
     showListing(pwd, entries) {
-        this._showForms(pwd, "");
-        this._show(pwd, listingRows(pwd, entries), entries);
+        this.#showForms(pwd, "");
+        this.#show(pwd, listingRows(pwd, entries), entries);
     }
 
     /**
@@ -57,8 +61,8 @@ export class View {
      * @param {import("./api-client.js").Entry[]} entries The matches.
      */
     showSearchResults(pwd, query, entries) {
-        this._showForms(pwd, query);
-        this._show(pwd, searchRows(pwd, entries), entries);
+        this.#showForms(pwd, query);
+        this.#show(pwd, searchRows(pwd, entries), entries);
     }
 
     /**
@@ -69,7 +73,7 @@ export class View {
      * @param {unknown} error What the upload threw.
      */
     showUploadError(pwd, fileName, error) {
-        this._uploadForm.elements.status.textContent = uploadErrorMessage(pwd, fileName, error);
+        this.#uploadForm.elements.status.textContent = uploadErrorMessage(pwd, fileName, error);
     }
 
     /**
@@ -79,13 +83,13 @@ export class View {
      * @param {string} pwd
      * @param {string} query
      */
-    _showForms(pwd, query) {
-        const form = this._searchForm;
+    #showForms(pwd, query) {
+        const form = this.#searchForm;
         form.elements.q.value = query;
         const clear = form.querySelector("a");
         clear.href = directoryHref(pwd);
         clear.hidden = query === "";
-        this._uploadForm.reset();
+        this.#uploadForm.reset();
     }
 
     /**
@@ -95,11 +99,11 @@ export class View {
      * @param {unknown} error What the load threw.
      */
     showError(pwd, error) {
-        this._showForms(pwd, "");
+        this.#showForms(pwd, "");
         const message = document.createElement("p");
         message.className = "error";
         message.textContent = errorMessage(pwd, error);
-        this._container.replaceChildren(breadcrumbBar(pwd), message);
+        this.#container.replaceChildren(breadcrumbBar(pwd), message);
     }
 
     /**
@@ -109,7 +113,7 @@ export class View {
      * @param {import("./view-helpers.js").Row[]} rows
      * @param {import("./api-client.js").Entry[]} entries The entries the rows came from.
      */
-    _show(pwd, rows, entries) {
+    #show(pwd, rows, entries) {
         const body = document.createElement("tbody");
         for (const { name, href, size } of rows) {
             const link = document.createElement("a");
@@ -125,7 +129,7 @@ export class View {
             body,
             section("tfoot", row("td", [counts, totalSize])),
         );
-        this._container.replaceChildren(breadcrumbBar(pwd), table);
+        this.#container.replaceChildren(breadcrumbBar(pwd), table);
     }
 }
 

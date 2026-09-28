@@ -7,15 +7,19 @@
  * neither, so it is tested with fakes for all three dependencies.
  */
 export class App {
+    #api;
+    #router;
+    #view;
+
     /**
      * @param {import("./api-client.js").ApiClient} api
      * @param {import("./router.js").Router} router
      * @param {View} view Rendered into, and told about this app so it can report the user's actions.
      */
     constructor(api, router, view) {
-        this._api = api;
-        this._router = router;
-        this._view = view;
+        this.#api = api;
+        this.#router = router;
+        this.#view = view;
         view.setApp(this);
     }
 
@@ -24,8 +28,8 @@ export class App {
      * shown before this resolves.
      */
     async start() {
-        this._router.listen(state => this.navigate(state));
-        await this.navigate(this._router.current());
+        this.#router.listen(state => this.navigate(state));
+        await this.navigate(this.#router.current());
     }
 
     /**
@@ -40,14 +44,14 @@ export class App {
     async navigate({ pwd, query }) {
         try {
             if (query.q) {
-                const entries = await this._api.search(pwd, query.q);
-                this._view.showSearchResults(pwd, query.q, entries);
+                const entries = await this.#api.search(pwd, query.q);
+                this.#view.showSearchResults(pwd, query.q, entries);
             } else {
-                const entries = await this._api.listDirectory(pwd);
-                this._view.showListing(pwd, entries);
+                const entries = await this.#api.listDirectory(pwd);
+                this.#view.showListing(pwd, entries);
             }
         } catch (error) {
-            this._view.showError(pwd, error);
+            this.#view.showError(pwd, error);
         }
     }
 
@@ -59,7 +63,7 @@ export class App {
      */
     search(text) {
         const q = text.trim();
-        this._router.go({ query: q ? { q } : {} });
+        this.#router.go({ query: q ? { q } : {} });
     }
 
     /**
@@ -69,11 +73,11 @@ export class App {
      * @param {File} file
      */
     async upload(file) {
-        const state = this._router.current();
+        const state = this.#router.current();
         try {
-            await this._api.upload(state.pwd, file);
+            await this.#api.upload(state.pwd, file);
         } catch (error) {
-            this._view.showUploadError(state.pwd, file.name, error);
+            this.#view.showUploadError(state.pwd, file.name, error);
             return;
         }
         await this.navigate(state);

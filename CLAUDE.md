@@ -141,7 +141,7 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
 - `wwwroot/js/api-client.js` — `ApiClient`, the browser's view of the JSON API, with `fetch` injected
   through the constructor so tests pass a fake. `listDirectory(path)` calls `GET /api/dir` and
   `search(path, query)` calls `GET /api/search`; both resolve to the `Entry[]`, and a non-2xx status
-  rejects with an `ApiError` carrying the HTTP status (shared by a private `_getJson`).
+  rejects with an `ApiError` carrying the HTTP status (shared by a private `#getJson`).
   `upload(path, file)` POSTs the file as the multipart `file` part to `/api/file` and resolves to the
   new `Entry`. The module
   also exports `fileUrl(path)`, the `GET /api/file` link for a download (followed by the browser, not
