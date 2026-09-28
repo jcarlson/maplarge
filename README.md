@@ -38,9 +38,11 @@ enumeration is already heavily optimised. Downloads and uploads, where the I/O i
 stream asynchronously. I also did not add logging: the project is not going to be deployed anywhere,
 and for troubleshooting at this size a step debugger is more useful than a million log statements.
 
-**Error responses are bare status codes.** A 400, 404 or 409 has no body. Additional information in
-the responses would not have materially changed the rudimentary UI that was built, which turns each
-status into its own message on the client. Error handling was kept basic on purpose to limit scope.
+**Error responses carry only a status.** A 400, 404 or 409 comes back as the framework's standard
+ProblemDetails body (the `[ApiController]` convention), with a title and status but nothing specific to
+the request, such as which rule a path broke. More information in the responses would not have
+materially changed the rudimentary UI that was built, which turns each status into its own message on
+the client. Error handling was kept basic on purpose to limit scope.
 
 ## Running it
 
