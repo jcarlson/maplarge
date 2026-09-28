@@ -2,7 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using TestProject.Models;
 using TestProject.Services;
 
-namespace TestProject.Controllers {
+namespace TestProject.Controllers
+{
     /// <summary>
     /// JSON API for searching the configured base directory by name. Like
     /// <see cref="DirectoryController"/>, it only translates HTTP to and from
@@ -10,10 +11,12 @@ namespace TestProject.Controllers {
     /// </summary>
     [ApiController]
     [Route("api/search")]
-    public class SearchController : ControllerBase {
+    public class SearchController : ControllerBase
+    {
         private readonly IFileSystemService _fileSystem;
 
-        public SearchController(IFileSystemService fileSystem) {
+        public SearchController(IFileSystemService fileSystem)
+        {
             _fileSystem = fileSystem;
         }
 
@@ -29,12 +32,18 @@ namespace TestProject.Controllers {
         /// 404 if the directory does not exist.
         /// </returns>
         [HttpGet]
-        public ActionResult<IReadOnlyList<FileSystemEntry>> Search([FromQuery(Name = "q")] string query = "", [FromQuery] string path = "") {
-            try {
+        public ActionResult<IReadOnlyList<FileSystemEntry>> Search([FromQuery(Name = "q")] string query = "", [FromQuery] string path = "")
+        {
+            try
+            {
                 return Ok(_fileSystem.Search(path, query));
-            } catch (ArgumentException) {
+            }
+            catch (ArgumentException)
+            {
                 return BadRequest();
-            } catch (DirectoryNotFoundException) {
+            }
+            catch (DirectoryNotFoundException)
+            {
                 return NotFound();
             }
         }

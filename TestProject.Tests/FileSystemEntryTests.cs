@@ -1,24 +1,29 @@
 using TestProject.Models;
 
-namespace TestProject.Tests {
+namespace TestProject.Tests
+{
     /// <summary>
     /// Exercises <see cref="FileSystemEntry.From"/> against a throwaway directory under the system temp
     /// folder. Real files are needed because a file's size is read from the disk.
     /// </summary>
-    public class FileSystemEntryTests : IDisposable {
+    public class FileSystemEntryTests : IDisposable
+    {
         private readonly string _baseDirectory =
             Path.Combine(Path.GetTempPath(), "FileSystemEntryTests-" + Guid.NewGuid());
 
-        public FileSystemEntryTests() {
+        public FileSystemEntryTests()
+        {
             Directory.CreateDirectory(_baseDirectory);
         }
 
-        public void Dispose() {
+        public void Dispose()
+        {
             Directory.Delete(_baseDirectory, recursive: true);
         }
 
         [Fact]
-        public void From_File_HasRelativePathWithForwardSlashesAndSize() {
+        public void From_File_HasRelativePathWithForwardSlashesAndSize()
+        {
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
             var file = Path.Combine(_baseDirectory, "photos", "cat.jpg");
             File.WriteAllText(file, "meow");
@@ -29,7 +34,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void From_EmptyFile_HasSizeZero() {
+        public void From_EmptyFile_HasSizeZero()
+        {
             var file = Path.Combine(_baseDirectory, "empty.txt");
             File.WriteAllText(file, "");
 
@@ -39,7 +45,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void From_Directory_HasRelativePathAndNoSize() {
+        public void From_Directory_HasRelativePathAndNoSize()
+        {
             var directory = Path.Combine(_baseDirectory, "photos");
             Directory.CreateDirectory(directory);
 

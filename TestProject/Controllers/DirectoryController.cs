@@ -2,17 +2,20 @@ using Microsoft.AspNetCore.Mvc;
 using TestProject.Models;
 using TestProject.Services;
 
-namespace TestProject.Controllers {
+namespace TestProject.Controllers
+{
     /// <summary>
     /// JSON API for browsing the configured base directory. The controller only translates
     /// HTTP to and from <see cref="IFileSystemService"/>; all path and listing logic lives there.
     /// </summary>
     [ApiController]
     [Route("api/dir")]
-    public class DirectoryController : ControllerBase {
+    public class DirectoryController : ControllerBase
+    {
         private readonly IFileSystemService _fileSystem;
 
-        public DirectoryController(IFileSystemService fileSystem) {
+        public DirectoryController(IFileSystemService fileSystem)
+        {
             _fileSystem = fileSystem;
         }
 
@@ -25,12 +28,18 @@ namespace TestProject.Controllers {
         /// 200 with the listing; 400 if the path escapes the base; 404 if the directory does not exist.
         /// </returns>
         [HttpGet]
-        public ActionResult<IReadOnlyList<FileSystemEntry>> List([FromQuery] string path = "") {
-            try {
+        public ActionResult<IReadOnlyList<FileSystemEntry>> List([FromQuery] string path = "")
+        {
+            try
+            {
                 return Ok(_fileSystem.ListDirectory(path));
-            } catch (ArgumentException) {
+            }
+            catch (ArgumentException)
+            {
                 return BadRequest();
-            } catch (DirectoryNotFoundException) {
+            }
+            catch (DirectoryNotFoundException)
+            {
                 return NotFound();
             }
         }

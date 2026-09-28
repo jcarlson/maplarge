@@ -1,25 +1,30 @@
 using TestProject.Models;
 using TestProject.Services;
 
-namespace TestProject.Tests {
+namespace TestProject.Tests
+{
     /// <summary>
     /// Exercises <see cref="FileSystemService"/> against a throwaway directory under the
     /// system temp folder, created fresh for each test and removed afterwards.
     /// </summary>
-    public class FileSystemServiceTests : IDisposable {
+    public class FileSystemServiceTests : IDisposable
+    {
         private readonly string _baseDirectory =
             Path.Combine(Path.GetTempPath(), "FileSystemServiceTests-" + Guid.NewGuid());
 
-        public FileSystemServiceTests() {
+        public FileSystemServiceTests()
+        {
             Directory.CreateDirectory(_baseDirectory);
         }
 
-        public void Dispose() {
+        public void Dispose()
+        {
             Directory.Delete(_baseDirectory, recursive: true);
         }
 
         [Fact]
-        public void ListDirectory_ReturnsFilesAndDirectoriesRelativeToBase() {
+        public void ListDirectory_ReturnsFilesAndDirectoriesRelativeToBase()
+        {
             File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "hello");
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
             File.WriteAllText(Path.Combine(_baseDirectory, "photos", "nested.jpg"), "");
@@ -38,7 +43,8 @@ namespace TestProject.Tests {
         [InlineData("photos")]
         [InlineData("/photos")]
         [InlineData("photos/")]
-        public void ListDirectory_Subdirectory_ReturnsEntriesRelativeToBase(string path) {
+        public void ListDirectory_Subdirectory_ReturnsEntriesRelativeToBase(string path)
+        {
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos", "2024"));
             File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg"), "meow");
             File.WriteAllText(Path.Combine(_baseDirectory, "unrelated.txt"), "");
@@ -54,14 +60,16 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void ListDirectory_MissingSubdirectory_Throws() {
+        public void ListDirectory_MissingSubdirectory_Throws()
+        {
             var service = new FileSystemService(_baseDirectory);
 
             Assert.Throws<DirectoryNotFoundException>(() => service.ListDirectory("nope"));
         }
 
         [Fact]
-        public void ListDirectory_PathIsAFile_ThrowsDirectoryNotFound() {
+        public void ListDirectory_PathIsAFile_ThrowsDirectoryNotFound()
+        {
             File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "");
             var service = new FileSystemService(_baseDirectory);
 
@@ -69,27 +77,32 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void ListDirectory_PathEscapingBase_Throws() {
+        public void ListDirectory_PathEscapingBase_Throws()
+        {
             var service = new FileSystemService(_baseDirectory);
 
             Assert.Throws<ArgumentException>(() => service.ListDirectory("../"));
         }
 
         [Fact]
-        public void ListDirectory_EmptyDirectory_ReturnsNoEntries() {
+        public void ListDirectory_EmptyDirectory_ReturnsNoEntries()
+        {
             var entries = new FileSystemService(_baseDirectory).ListDirectory();
 
             Assert.Empty(entries);
         }
 
         [Fact]
-        public void ListDirectory_OrdersDirectoriesBeforeFiles_EachInOrdinalOrder() {
+        public void ListDirectory_OrdersDirectoriesBeforeFiles_EachInOrdinalOrder()
+        {
             // Names chosen so ordinal order differs from natural/numeric order and so a file
             // would sort before a directory if the two kinds were not separated.
-            foreach (var name in new[] { "z", "10", "2" }) {
+            foreach (var name in new[] { "z", "10", "2" })
+            {
                 Directory.CreateDirectory(Path.Combine(_baseDirectory, name));
             }
-            foreach (var name in new[] { "b.txt", "a.txt", "10.txt", "2.txt" }) {
+            foreach (var name in new[] { "b.txt", "a.txt", "10.txt", "2.txt" })
+            {
                 File.WriteAllText(Path.Combine(_baseDirectory, name), "");
             }
 
@@ -99,7 +112,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void Search_FindsMatchesAtEveryDepthOrderedLikeADirectoryListing() {
+        public void Search_FindsMatchesAtEveryDepthOrderedLikeADirectoryListing()
+        {
             File.WriteAllText(Path.Combine(_baseDirectory, "cat.txt"), "12");
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos", "cats"));
             File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cats", "tabby-cat.jpg"), "123");
@@ -117,7 +131,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void Search_IgnoresCase() {
+        public void Search_IgnoresCase()
+        {
             File.WriteAllText(Path.Combine(_baseDirectory, "README.md"), "");
 
             var entries = new FileSystemService(_baseDirectory).Search("", "readme");
@@ -126,7 +141,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void Search_MatchesTheEntryNameOnlyNotItsParentDirectories() {
+        public void Search_MatchesTheEntryNameOnlyNotItsParentDirectories()
+        {
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
             File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg"), "");
 
@@ -136,7 +152,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void Search_NoMatches_ReturnsNoEntries() {
+        public void Search_NoMatches_ReturnsNoEntries()
+        {
             File.WriteAllText(Path.Combine(_baseDirectory, "dog.jpg"), "");
 
             var entries = new FileSystemService(_baseDirectory).Search("", "cat");
@@ -147,7 +164,8 @@ namespace TestProject.Tests {
         [Theory]
         [InlineData("")]
         [InlineData("   ")]
-        public void Search_BlankQuery_Throws(string query) {
+        public void Search_BlankQuery_Throws(string query)
+        {
             var service = new FileSystemService(_baseDirectory);
 
             Assert.Throws<ArgumentException>(() => service.Search("", query));
@@ -157,7 +175,8 @@ namespace TestProject.Tests {
         [InlineData("photos")]
         [InlineData("/photos")]
         [InlineData("photos/")]
-        public void Search_Subdirectory_FindsOnlyEntriesBelowIt_WithPathsRelativeToBase(string path) {
+        public void Search_Subdirectory_FindsOnlyEntriesBelowIt_WithPathsRelativeToBase(string path)
+        {
             File.WriteAllText(Path.Combine(_baseDirectory, "cat.txt"), "");
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos", "cats"));
             File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cats", "tabby-cat.jpg"), "123");
@@ -175,14 +194,16 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void Search_MissingSubdirectory_Throws() {
+        public void Search_MissingSubdirectory_Throws()
+        {
             var service = new FileSystemService(_baseDirectory);
 
             Assert.Throws<DirectoryNotFoundException>(() => service.Search("nope", "cat"));
         }
 
         [Fact]
-        public void Search_PathIsAFile_ThrowsDirectoryNotFound() {
+        public void Search_PathIsAFile_ThrowsDirectoryNotFound()
+        {
             File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "");
             var service = new FileSystemService(_baseDirectory);
 
@@ -190,14 +211,16 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void Search_PathEscapingBase_Throws() {
+        public void Search_PathEscapingBase_Throws()
+        {
             var service = new FileSystemService(_baseDirectory);
 
             Assert.Throws<ArgumentException>(() => service.Search("../", "cat"));
         }
 
         [Fact]
-        public void GetFileInfo_ReturnsInfoForExistingFile() {
+        public void GetFileInfo_ReturnsInfoForExistingFile()
+        {
             File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "hello");
 
             var info = new FileSystemService(_baseDirectory).GetFileInfo("notes.txt");
@@ -210,7 +233,8 @@ namespace TestProject.Tests {
         [Theory]
         [InlineData("photos/cat.jpg")]
         [InlineData("/photos/cat.jpg")]
-        public void GetFileInfo_NestedFile_ResolvesRelativeToBase(string path) {
+        public void GetFileInfo_NestedFile_ResolvesRelativeToBase(string path)
+        {
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
             File.WriteAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg"), "meow");
 
@@ -220,7 +244,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void GetFileInfo_MissingFile_Throws() {
+        public void GetFileInfo_MissingFile_Throws()
+        {
             var service = new FileSystemService(_baseDirectory);
 
             Assert.Throws<FileNotFoundException>(() => service.GetFileInfo("nope.txt"));
@@ -229,7 +254,8 @@ namespace TestProject.Tests {
         [Theory]
         [InlineData("")]
         [InlineData("photos")]
-        public void GetFileInfo_DirectoryAtPath_ThrowsFileNotFound(string path) {
+        public void GetFileInfo_DirectoryAtPath_ThrowsFileNotFound(string path)
+        {
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
             var service = new FileSystemService(_baseDirectory);
 
@@ -237,14 +263,16 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void GetFileInfo_PathEscapingBase_Throws() {
+        public void GetFileInfo_PathEscapingBase_Throws()
+        {
             var service = new FileSystemService(_baseDirectory);
 
             Assert.Throws<ArgumentException>(() => service.GetFileInfo("../secret.txt"));
         }
 
         [Fact]
-        public async Task WriteFileAsync_WritesContentIntoBase_ReturnsFileEntry() {
+        public async Task WriteFileAsync_WritesContentIntoBase_ReturnsFileEntry()
+        {
             using var content = new MemoryStream("hello"u8.ToArray());
 
             var entry = await new FileSystemService(_baseDirectory).WriteFileAsync("", "notes.txt", content);
@@ -257,7 +285,8 @@ namespace TestProject.Tests {
         [InlineData("photos")]
         [InlineData("/photos")]
         [InlineData("photos/")]
-        public async Task WriteFileAsync_Subdirectory_WritesRelativeToBase(string directoryPath) {
+        public async Task WriteFileAsync_Subdirectory_WritesRelativeToBase(string directoryPath)
+        {
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
             using var content = new MemoryStream("meow"u8.ToArray());
 
@@ -268,7 +297,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public async Task WriteFileAsync_MissingDirectory_Throws() {
+        public async Task WriteFileAsync_MissingDirectory_Throws()
+        {
             var service = new FileSystemService(_baseDirectory);
 
             await Assert.ThrowsAsync<DirectoryNotFoundException>(
@@ -276,7 +306,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public async Task WriteFileAsync_DirectoryPathIsAFile_Throws() {
+        public async Task WriteFileAsync_DirectoryPathIsAFile_Throws()
+        {
             File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "");
             var service = new FileSystemService(_baseDirectory);
 
@@ -285,7 +316,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public async Task WriteFileAsync_PathEscapingBase_Throws() {
+        public async Task WriteFileAsync_PathEscapingBase_Throws()
+        {
             var service = new FileSystemService(_baseDirectory);
 
             await Assert.ThrowsAsync<ArgumentException>(
@@ -293,7 +325,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public async Task WriteFileAsync_ExistingFile_ThrowsAndLeavesFileUntouched() {
+        public async Task WriteFileAsync_ExistingFile_ThrowsAndLeavesFileUntouched()
+        {
             File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "original");
             using var content = new MemoryStream("replacement"u8.ToArray());
             var service = new FileSystemService(_baseDirectory);
@@ -304,7 +337,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public async Task WriteFileAsync_ExistingDirectoryWithSameName_Throws() {
+        public async Task WriteFileAsync_ExistingDirectoryWithSameName_Throws()
+        {
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "notes"));
             var service = new FileSystemService(_baseDirectory);
 
@@ -317,7 +351,8 @@ namespace TestProject.Tests {
         [InlineData("..")]
         [InlineData("sub/notes.txt")]
         [InlineData("../notes.txt")]
-        public async Task WriteFileAsync_FileNameNotASingleSegment_ThrowsAndWritesNothing(string fileName) {
+        public async Task WriteFileAsync_FileNameNotASingleSegment_ThrowsAndWritesNothing(string fileName)
+        {
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "sub"));
             var service = new FileSystemService(_baseDirectory);
 
@@ -328,7 +363,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public async Task WriteFileAsync_ContentFailsPartWay_DeletesThePartialFileAndRethrows() {
+        public async Task WriteFileAsync_ContentFailsPartWay_DeletesThePartialFileAndRethrows()
+        {
             var service = new FileSystemService(_baseDirectory);
 
             await Assert.ThrowsAsync<IOException>(() => service.WriteFileAsync("", "notes.txt", new FailingStream()));
@@ -337,7 +373,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public async Task WriteFileAsync_Cancelled_DeletesThePartialFileAndRethrows() {
+        public async Task WriteFileAsync_Cancelled_DeletesThePartialFileAndRethrows()
+        {
             using var content = new MemoryStream("hello"u8.ToArray());
             using var cancelled = new CancellationTokenSource();
             cancelled.Cancel();
@@ -350,7 +387,8 @@ namespace TestProject.Tests {
         }
 
         /// <summary>A readable stream whose first read fails, like a client that went away mid-upload.</summary>
-        private sealed class FailingStream : Stream {
+        private sealed class FailingStream : Stream
+        {
             public override bool CanRead => true;
             public override bool CanSeek => false;
             public override bool CanWrite => false;
@@ -364,7 +402,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void Constructor_NormalizesBaseDirectoryPath() {
+        public void Constructor_NormalizesBaseDirectoryPath()
+        {
             File.WriteAllText(Path.Combine(_baseDirectory, "file.txt"), "");
             var unnormalized = _baseDirectory + Path.DirectorySeparatorChar + "." + Path.DirectorySeparatorChar;
 
@@ -374,7 +413,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void Constructor_MissingBaseDirectory_Throws() {
+        public void Constructor_MissingBaseDirectory_Throws()
+        {
             var missing = Path.Combine(_baseDirectory, "does-not-exist");
 
             Assert.Throws<DirectoryNotFoundException>(() => new FileSystemService(missing));

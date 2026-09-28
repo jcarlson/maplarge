@@ -2,13 +2,15 @@ using Microsoft.AspNetCore.Mvc;
 using TestProject.Controllers;
 using TestProject.Models;
 
-namespace TestProject.Tests {
+namespace TestProject.Tests
+{
     /// <summary>
     /// Calls <see cref="SearchController"/> actions directly over a scripted
     /// <see cref="StubFileSystemService"/>, so the mapping of each service outcome to an HTTP
     /// result is tested without a running host or a directory on disk.
     /// </summary>
-    public class SearchControllerTests {
+    public class SearchControllerTests
+    {
         private static readonly FileSystemEntry[] Matches = {
             new("photos/cat.jpg", IsDirectory: false, Size: 4),
         };
@@ -16,12 +18,14 @@ namespace TestProject.Tests {
         private readonly StubFileSystemService _fileSystem = new();
         private readonly SearchController _controller;
 
-        public SearchControllerTests() {
+        public SearchControllerTests()
+        {
             _controller = new SearchController(_fileSystem);
         }
 
         [Fact]
-        public void Search_ReturnsOkWithTheMatchesForThePathAndQuery() {
+        public void Search_ReturnsOkWithTheMatchesForThePathAndQuery()
+        {
             (string path, string query)? searched = null;
             _fileSystem.OnSearch = (path, query) => { searched = (path, query); return Matches; };
 
@@ -33,7 +37,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void Search_DefaultPath_SearchesTheBase() {
+        public void Search_DefaultPath_SearchesTheBase()
+        {
             (string path, string query)? searched = null;
             _fileSystem.OnSearch = (path, query) => { searched = (path, query); return Matches; };
 
@@ -43,7 +48,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void Search_OmittedQuery_PassesAnEmptyQueryForTheServiceToReject() {
+        public void Search_OmittedQuery_PassesAnEmptyQueryForTheServiceToReject()
+        {
             (string path, string query)? searched = null;
             _fileSystem.OnSearch = (path, query) => { searched = (path, query); return Matches; };
 
@@ -53,7 +59,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void Search_BlankQueryOrEscapingPath_ReturnsBadRequest() {
+        public void Search_BlankQueryOrEscapingPath_ReturnsBadRequest()
+        {
             _fileSystem.OnSearch = (_, _) => throw new ArgumentException("blank");
 
             var result = _controller.Search("   ");
@@ -62,7 +69,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void Search_MissingDirectory_ReturnsNotFound() {
+        public void Search_MissingDirectory_ReturnsNotFound()
+        {
             _fileSystem.OnSearch = (_, _) => throw new DirectoryNotFoundException();
 
             var result = _controller.Search("cat", "nope");
@@ -71,7 +79,8 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void Search_OtherFailure_Propagates() {
+        public void Search_OtherFailure_Propagates()
+        {
             _fileSystem.OnSearch = (_, _) => throw new IOException("disk on fire");
 
             Assert.Throws<IOException>(() => _controller.Search("cat"));

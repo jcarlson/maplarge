@@ -1,6 +1,7 @@
 using TestProject.Models;
 
-namespace TestProject.Services {
+namespace TestProject.Services
+{
     /// <summary>
     /// Operations on the files and directories under a fixed base directory. Every path taken
     /// or returned is relative to that base, so callers never see where on disk the base lives.
@@ -8,7 +9,8 @@ namespace TestProject.Services {
     /// mapping of each documented outcome to an HTTP status can be tested against a stub that
     /// produces the outcome on demand, with no directory on disk.
     /// </summary>
-    public interface IFileSystemService {
+    public interface IFileSystemService
+    {
         /// <summary>
         /// Lists the files and directories directly inside <paramref name="path"/>, a directory
         /// given relative to the base. An empty path or "/" lists the base itself. Entries come

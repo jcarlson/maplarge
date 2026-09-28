@@ -476,3 +476,17 @@ Two projects side by side under a solution is the layout `dotnet new sln` and `d
 produce and the one reviewers will expect to open; it removes the exclusion and its comment rather
 than explaining them. `src/` and `tests/` folders were considered and passed over as a level of
 nesting a two-project repository does not need.
+
+## 26. C# is formatted in the Allman style, declared in `.editorconfig`
+
+**Decision:** Every opening brace in C# goes on its own line, and namespaces stay block-scoped. The
+rules live in a root `.editorconfig`, and `dotnet format whitespace` applied them to every file in one
+whitespace-only commit; the same command with `--verify-no-changes` confirms a tree is clean.
+
+**Why:** The code was written with braces at the end of the line, the style of the JavaScript beside
+it. That is a readable style, but it is not the C# one: Microsoft's conventions, the defaults of Visual
+Studio, Rider and `dotnet format`, and nearly every C# codebase put the brace on its own line, and a
+C# reviewer notices the difference on the first file. Conforming costs one mechanical commit and
+removes a distraction from what the code does. The `.editorconfig` makes the choice explicit and
+enforceable rather than something each editor has to guess; the JavaScript keeps its own convention,
+which the file applies per language.

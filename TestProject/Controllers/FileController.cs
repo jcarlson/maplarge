@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.StaticFiles;
 using TestProject.Models;
 using TestProject.Services;
 
-namespace TestProject.Controllers {
+namespace TestProject.Controllers
+{
     /// <summary>
     /// Serves and accepts individual files in the configured base directory. Like
     /// <see cref="DirectoryController"/>, it only maps HTTP to and from
@@ -11,13 +12,15 @@ namespace TestProject.Controllers {
     /// </summary>
     [ApiController]
     [Route("api/file")]
-    public class FileController : ControllerBase {
+    public class FileController : ControllerBase
+    {
         private const string FallbackContentType = "application/octet-stream";
         private static readonly FileExtensionContentTypeProvider ContentTypes = new();
 
         private readonly IFileSystemService _fileSystem;
 
-        public FileController(IFileSystemService fileSystem) {
+        public FileController(IFileSystemService fileSystem)
+        {
             _fileSystem = fileSystem;
         }
 
@@ -30,17 +33,24 @@ namespace TestProject.Controllers {
         /// 200 with the file body; 400 if the path escapes the base; 404 if there is no file at the path.
         /// </returns>
         [HttpGet]
-        public IActionResult DownloadFile([FromQuery] string path) {
+        public IActionResult DownloadFile([FromQuery] string path)
+        {
             FileInfo file;
-            try {
+            try
+            {
                 file = _fileSystem.GetFileInfo(path);
-            } catch (ArgumentException) {
+            }
+            catch (ArgumentException)
+            {
                 return BadRequest();
-            } catch (FileNotFoundException) {
+            }
+            catch (FileNotFoundException)
+            {
                 return NotFound();
             }
 
-            if (!ContentTypes.TryGetContentType(file.Name, out var contentType)) {
+            if (!ContentTypes.TryGetContentType(file.Name, out var contentType))
+            {
                 contentType = FallbackContentType;
             }
 
@@ -59,16 +69,24 @@ namespace TestProject.Controllers {
         /// 409 if a file or directory with that name already exists.
         /// </returns>
         [HttpPost]
-        public async Task<ActionResult<FileSystemEntry>> UploadFile(IFormFile file, [FromQuery] string path = "", CancellationToken cancellationToken = default) {
+        public async Task<ActionResult<FileSystemEntry>> UploadFile(IFormFile file, [FromQuery] string path = "", CancellationToken cancellationToken = default)
+        {
             FileSystemEntry entry;
-            try {
+            try
+            {
                 using var content = file.OpenReadStream();
                 entry = await _fileSystem.WriteFileAsync(path, file.FileName, content, cancellationToken);
-            } catch (ArgumentException) {
+            }
+            catch (ArgumentException)
+            {
                 return BadRequest();
-            } catch (DirectoryNotFoundException) {
+            }
+            catch (DirectoryNotFoundException)
+            {
                 return NotFound();
-            } catch (EntryExistsException) {
+            }
+            catch (EntryExistsException)
+            {
                 return Conflict();
             }
 

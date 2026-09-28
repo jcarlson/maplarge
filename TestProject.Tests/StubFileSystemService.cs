@@ -1,13 +1,15 @@
 using TestProject.Models;
 using TestProject.Services;
 
-namespace TestProject.Tests {
+namespace TestProject.Tests
+{
     /// <summary>
     /// An <see cref="IFileSystemService"/> a test scripts by assigning a delegate per method, so a
     /// controller can be handed each outcome the real service documents (a result, or one of its
     /// exceptions) without a directory on disk. A method the test did not script fails the test.
     /// </summary>
-    internal sealed class StubFileSystemService : IFileSystemService {
+    internal sealed class StubFileSystemService : IFileSystemService
+    {
         public Func<string, IReadOnlyList<FileSystemEntry>> OnListDirectory { get; set; } = _ => throw Unscripted();
         public Func<string, string, IReadOnlyList<FileSystemEntry>> OnSearch { get; set; } = (_, _) => throw Unscripted();
         public Func<string, FileInfo> OnGetFileInfo { get; set; } = _ => throw Unscripted();
