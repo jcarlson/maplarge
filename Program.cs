@@ -5,8 +5,6 @@ namespace TestProject {
         public static void Main(string[] args) {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-
             builder.Services.AddControllers();
 
             var baseDirectory = builder.Configuration["FileBrowser:BaseDirectory"]
@@ -15,8 +13,6 @@ namespace TestProject {
                 new FileSystemService(Path.GetFullPath(baseDirectory, builder.Environment.ContentRootPath)));
 
             var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
 
             // "/" serves wwwroot/index.html, the SPA; everything else under wwwroot is served as is.
             app.UseDefaultFiles();

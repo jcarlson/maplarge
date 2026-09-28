@@ -8,8 +8,4 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);TestProject.Tests/**</DefaultItemExcludes>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="wwwroot\index.html" />
-  </ItemGroup>
-
 </Project>
