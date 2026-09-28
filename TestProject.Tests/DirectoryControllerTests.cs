@@ -49,7 +49,7 @@ namespace TestProject.Tests {
 
             var ok = Assert.IsType<OkObjectResult>(result.Result);
             var entries = Assert.IsAssignableFrom<IReadOnlyList<FileSystemEntry>>(ok.Value);
-            Assert.Equal(new[] { new FileSystemEntry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 0) }, entries);
+            Assert.Equal(new[] { new FileSystemEntry("photos/cat.jpg", IsDirectory: false, Size: 0) }, entries);
         }
 
         [Fact]

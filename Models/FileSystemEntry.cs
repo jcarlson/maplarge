@@ -1,8 +1,9 @@
 namespace TestProject.Models {
     /// <summary>
     /// One file or directory, addressed by its path relative to the base directory: the shape
-    /// every API response is made of. <paramref name="Size"/> is the file's length in bytes, or
-    /// <c>null</c> for a directory.
+    /// every API response is made of. <paramref name="Path"/> uses <c>/</c> as its separator on
+    /// every platform, so the client can split it without knowing the server's OS.
+    /// <paramref name="Size"/> is the file's length in bytes, or <c>null</c> for a directory.
     /// </summary>
     public record FileSystemEntry(string Path, bool IsDirectory, long? Size) {
         /// <summary>
@@ -17,7 +18,7 @@ namespace TestProject.Models {
         /// The file or directory, as <see cref="DirectoryInfo.EnumerateFileSystemInfos()"/> yields it.
         /// </param>
         public static FileSystemEntry From(string baseDirectory, FileSystemInfo info) =>
-            new(System.IO.Path.GetRelativePath(baseDirectory, info.FullName),
+            new(System.IO.Path.GetRelativePath(baseDirectory, info.FullName).Replace(System.IO.Path.DirectorySeparatorChar, '/'),
                 IsDirectory: info is DirectoryInfo,
                 Size: (info as FileInfo)?.Length);
     }

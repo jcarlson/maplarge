@@ -61,7 +61,7 @@ node --test
 
 ## The API
 
-All paths are relative to the base directory. Responses are JSON arrays of entries, each
+All paths are relative to the base directory and use `/` as the separator on every platform. Responses are JSON arrays of entries, each
 `{ path, isDirectory, size }` with `size` in bytes for a file and `null` for a directory, directories
 first and then files, each group in ordinal order.
 

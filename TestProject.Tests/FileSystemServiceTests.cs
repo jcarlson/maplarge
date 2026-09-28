@@ -47,8 +47,8 @@ namespace TestProject.Tests {
 
             Assert.Equal(
                 new[] {
-                    new FileSystemEntry(Path.Combine("photos", "2024"), IsDirectory: true, Size: null),
-                    new FileSystemEntry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 4),
+                    new FileSystemEntry("photos/2024", IsDirectory: true, Size: null),
+                    new FileSystemEntry("photos/cat.jpg", IsDirectory: false, Size: 4),
                 },
                 entries);
         }
@@ -101,9 +101,9 @@ namespace TestProject.Tests {
 
             Assert.Equal(
                 new[] {
-                    new FileSystemEntry(Path.Combine("photos", "cats"), IsDirectory: true, Size: null),
+                    new FileSystemEntry("photos/cats", IsDirectory: true, Size: null),
                     new FileSystemEntry("cat.txt", IsDirectory: false, Size: 2),
-                    new FileSystemEntry(Path.Combine("photos", "cats", "tabby-cat.jpg"), IsDirectory: false, Size: 3),
+                    new FileSystemEntry("photos/cats/tabby-cat.jpg", IsDirectory: false, Size: 3),
                 },
                 entries);
         }
@@ -160,8 +160,8 @@ namespace TestProject.Tests {
 
             Assert.Equal(
                 new[] {
-                    new FileSystemEntry(Path.Combine("photos", "cats"), IsDirectory: true, Size: null),
-                    new FileSystemEntry(Path.Combine("photos", "cats", "tabby-cat.jpg"), IsDirectory: false, Size: 3),
+                    new FileSystemEntry("photos/cats", IsDirectory: true, Size: null),
+                    new FileSystemEntry("photos/cats/tabby-cat.jpg", IsDirectory: false, Size: 3),
                 },
                 entries);
         }
@@ -247,7 +247,7 @@ namespace TestProject.Tests {
 
             var entry = await new FileSystemService(_baseDirectory).WriteFileAsync(directoryPath, "cat.jpg", content);
 
-            Assert.Equal(new FileSystemEntry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 4), entry);
+            Assert.Equal(new FileSystemEntry("photos/cat.jpg", IsDirectory: false, Size: 4), entry);
             Assert.Equal("meow", File.ReadAllText(Path.Combine(_baseDirectory, "photos", "cat.jpg")));
         }
 

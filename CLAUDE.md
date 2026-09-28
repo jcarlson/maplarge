@@ -174,7 +174,7 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   the `?`. Tested in both directions in `TestProject.Tests/js/url-state.test.js`.
 - `Models/FileSystemEntry.cs` — the `FileSystemEntry(Path, IsDirectory, Size)` record, the shape every API
   response is made of, whose static `From` builds one from the base directory and a `FileSystemInfo` (the
-  only place a `FileSystemInfo` is read). Paths are base-relative; `Size` is bytes for a file, `null` for a
+  only place a `FileSystemInfo` is read). Paths are base-relative and use `/` on every platform (decision 22); `Size` is bytes for a file, `null` for a
   directory. There is no wrapper model: listings are plain arrays, and counts and totals are the client's
   job (decision 17).
 - `Services/FileSystemService.cs` — the operations on the configured base directory (`ListDirectory`,

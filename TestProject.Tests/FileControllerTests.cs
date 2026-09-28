@@ -77,8 +77,8 @@ namespace TestProject.Tests {
             var result = await _controller.UploadFile(Upload("notes.txt", "hello"), "docs");
 
             var created = Assert.IsType<CreatedResult>(result.Result);
-            Assert.Equal(new FileSystemEntry(Path.Combine("docs", "notes.txt"), IsDirectory: false, Size: 5), created.Value);
-            Assert.Equal("/api/file?path=" + Uri.EscapeDataString(Path.Combine("docs", "notes.txt")), created.Location);
+            Assert.Equal(new FileSystemEntry("docs/notes.txt", IsDirectory: false, Size: 5), created.Value);
+            Assert.Equal("/api/file?path=" + Uri.EscapeDataString("docs/notes.txt"), created.Location);
             Assert.Equal("hello", File.ReadAllText(Path.Combine(_baseDirectory, "docs", "notes.txt")));
         }
 

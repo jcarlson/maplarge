@@ -403,3 +403,19 @@ intact and the message sits next to the thing they were doing. `<output>` is the
 form's result and takes part in `form.reset()`, so one reset call clears both the file and the message.
 The multipart request was checked end to end against the running server from Node's `FormData`, since
 a mismatch in the part name is the kind of bug unit tests with a fake `fetch` cannot see.
+
+## 22. Entry paths use `/` on every platform
+
+**Decision:** `FileSystemEntry.From` replaces the platform's directory separator with `/` in the
+relative path it builds, so `GET /api/dir` and `GET /api/search` return `photos/cat.jpg` on Windows as
+well as on macOS and Linux. Paths coming in from the client are unaffected: `PathResolver` already
+accepts either separator on Windows through `Path.GetFullPath`.
+
+**Why:** `Path.GetRelativePath` returns `photos\cat.jpg` on Windows, and the client splits paths on
+`/` to show an entry's name, build the breadcrumbs, find the parent for `..`, and strip the searched
+directory from a search result. On Windows every one of those displayed the whole path as a single
+segment and `..` went to the base rather than the parent. The C# tests did not catch it because they
+built their expected paths with `Path.Combine`, which hides the separator; they now spell out `/`, so
+the same expectation holds on every platform. The separator is normalised on the server rather than
+tolerated on the client because the path is part of the API's contract, and one representation on the
+wire is simpler than two.

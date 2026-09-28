@@ -18,14 +18,14 @@ namespace TestProject.Tests {
         }
 
         [Fact]
-        public void From_File_HasRelativePathAndSize() {
+        public void From_File_HasRelativePathWithForwardSlashesAndSize() {
             Directory.CreateDirectory(Path.Combine(_baseDirectory, "photos"));
             var file = Path.Combine(_baseDirectory, "photos", "cat.jpg");
             File.WriteAllText(file, "meow");
 
             var entry = FileSystemEntry.From(_baseDirectory, new FileInfo(file));
 
-            Assert.Equal(new FileSystemEntry(Path.Combine("photos", "cat.jpg"), IsDirectory: false, Size: 4), entry);
+            Assert.Equal(new FileSystemEntry("photos/cat.jpg", IsDirectory: false, Size: 4), entry);
         }
 
         [Fact]
