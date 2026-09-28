@@ -328,6 +328,42 @@ namespace TestProject.Tests {
         }
 
         [Fact]
+        public async Task WriteFileAsync_ContentFailsPartWay_DeletesThePartialFileAndRethrows() {
+            var service = new FileSystemService(_baseDirectory);
+
+            await Assert.ThrowsAsync<IOException>(() => service.WriteFileAsync("", "notes.txt", new FailingStream()));
+
+            Assert.False(File.Exists(Path.Combine(_baseDirectory, "notes.txt")));
+        }
+
+        [Fact]
+        public async Task WriteFileAsync_Cancelled_DeletesThePartialFileAndRethrows() {
+            using var content = new MemoryStream("hello"u8.ToArray());
+            using var cancelled = new CancellationTokenSource();
+            cancelled.Cancel();
+            var service = new FileSystemService(_baseDirectory);
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => service.WriteFileAsync("", "notes.txt", content, cancelled.Token));
+
+            Assert.False(File.Exists(Path.Combine(_baseDirectory, "notes.txt")));
+        }
+
+        /// <summary>A readable stream whose first read fails, like a client that went away mid-upload.</summary>
+        private sealed class FailingStream : Stream {
+            public override bool CanRead => true;
+            public override bool CanSeek => false;
+            public override bool CanWrite => false;
+            public override long Length => throw new NotSupportedException();
+            public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+            public override int Read(byte[] buffer, int offset, int count) => throw new IOException("Connection reset.");
+            public override void Flush() { }
+            public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+            public override void SetLength(long value) => throw new NotSupportedException();
+            public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        }
+
+        [Fact]
         public void Constructor_NormalizesBaseDirectoryPath() {
             File.WriteAllText(Path.Combine(_baseDirectory, "file.txt"), "");
             var unnormalized = _baseDirectory + Path.DirectorySeparatorChar + "." + Path.DirectorySeparatorChar;

@@ -110,7 +110,8 @@ namespace TestProject.Services {
         /// <summary>
         /// Writes <paramref name="content"/> to a new file named <paramref name="fileName"/> inside
         /// <paramref name="directoryPath"/>, a directory given relative to the base. The file must not
-        /// already exist; nothing is ever overwritten.
+        /// already exist; nothing is ever overwritten. If the copy fails or is cancelled part way, the
+        /// partial file is deleted before the exception propagates, so a failed upload leaves no trace.
         /// </summary>
         /// <returns>The new file as the <see cref="FileSystemEntry"/> a listing of its directory would show.</returns>
         /// <exception cref="ArgumentException">
@@ -132,8 +133,17 @@ namespace TestProject.Services {
 
             // CreateNew also refuses an existing file, so two racing writes cannot clobber each other.
             var options = new FileStreamOptions { Mode = FileMode.CreateNew, Access = FileAccess.Write, Options = FileOptions.Asynchronous };
-            await using (var file = new FileStream(target, options)) {
-                await content.CopyToAsync(file, cancellationToken);
+            var file = new FileStream(target, options);
+            try {
+                await using (file) {
+                    await content.CopyToAsync(file, cancellationToken);
+                }
+            } catch {
+                // The copy stopped part way (the client went away, or the request was cancelled):
+                // a half-written file must not be left looking like a real one. The file is ours to
+                // delete because CreateNew succeeded, so nothing else could have created it.
+                File.Delete(target);
+                throw;
             }
 
             return FileSystemEntry.From(_paths.BaseDirectory, new FileInfo(target));
