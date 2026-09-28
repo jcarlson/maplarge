@@ -438,3 +438,25 @@ deterministic, so a cursor is a path), and on the client either pagination contr
 rendering that appends each page's rows instead of replacing the table. It was left out to keep the
 project to the exercise's size; the README's notes to the reviewer say the same, so the omission is
 visible rather than discovered.
+
+## 24. The controllers depend on `IFileSystemService`, and their tests script a stub
+
+**Decision:** The four operations the controllers use (`ListDirectory`, `Search`, `GetFileInfo`,
+`WriteFileAsync`) are declared on an `IFileSystemService` interface, which carries the documentation
+of each operation's outcomes and exceptions; `FileSystemService` implements it and is registered as
+the singleton for it. The controllers take the interface. Their tests no longer build a real
+`FileSystemService` over a temp directory: they script a `StubFileSystemService`, a hand-written
+implementation with one settable delegate per operation, to return a result or throw one of the
+documented exceptions, and assert the HTTP result. Each controller also gains a test that an
+undocumented exception propagates rather than being swallowed. The service's own tests still run
+against real temp directories, as before.
+
+**Why:** A controller's whole job is to map each outcome the service documents to a status code, and
+that mapping is tested most directly by producing each outcome on demand. Doing it through the real
+service meant every controller test also had to arrange a directory on disk, and some outcomes (an
+I/O failure that should surface as a 500) could not be produced at all. The interface is the seam
+that makes the stub possible; it is introduced now, and not earlier, because this is the first
+concrete need for a second implementation. A hand-written stub is used rather than a mocking library
+for the same reason the tests use no assertion library: one small class the reader can see is worth
+more here than a dependency. Nothing else depends on the interface; the service tests deliberately
+keep the real class, since path resolution and enumeration are what they exist to check.

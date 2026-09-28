@@ -115,8 +115,8 @@ A path that would escape the base directory is a 400 in every case.
 ## Where to look
 
 - `Controllers/`, `Services/` and `Models/` are the server. `PathResolver` is the piece that keeps every
-  request inside the base directory; `FileSystemService` does the file system work; the controllers only
-  translate HTTP.
+  request inside the base directory; `FileSystemService`, behind `IFileSystemService`, does the file system
+  work; the controllers only translate HTTP.
 - `wwwroot/js/` is the client. `app.js` decides what the URL means and what the user's actions do;
   `router.js` is the only code that touches the location and `view.js` the only code that touches the
   DOM; `url-state.js`, `view-helpers.js` and `api-client.js` are pure and tested.

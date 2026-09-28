@@ -6,33 +6,32 @@ using TestProject.Services;
 
 namespace TestProject.Tests {
     /// <summary>
-    /// Calls <see cref="FileController"/> actions directly, backed by a real
-    /// <see cref="FileSystemService"/> over a throwaway temp directory, so the HTTP mapping is
-    /// tested without a running host.
+    /// Calls <see cref="FileController"/> actions directly over a scripted
+    /// <see cref="StubFileSystemService"/>, so the mapping of each service outcome to an HTTP
+    /// result is tested without a running host or a directory on disk.
     /// </summary>
-    public class FileControllerTests : IDisposable {
-        private readonly string _baseDirectory =
-            Path.Combine(Path.GetTempPath(), "FileControllerTests-" + Guid.NewGuid());
+    public class FileControllerTests {
+        // Need not exist: the physical-file result opens it only when executed.
+        private static readonly string BaseDirectory = Path.Combine(Path.GetTempPath(), "FileControllerTests");
+
+        private readonly StubFileSystemService _fileSystem = new();
         private readonly FileController _controller;
 
         public FileControllerTests() {
-            Directory.CreateDirectory(_baseDirectory);
-            _controller = new FileController(new FileSystemService(_baseDirectory));
-        }
-
-        public void Dispose() {
-            Directory.Delete(_baseDirectory, recursive: true);
+            _controller = new FileController(_fileSystem);
         }
 
         [Fact]
-        public void DownloadFile_ExistingFile_ReturnsPhysicalFileAsNamedAttachment() {
-            Directory.CreateDirectory(Path.Combine(_baseDirectory, "docs"));
-            File.WriteAllText(Path.Combine(_baseDirectory, "docs", "notes.txt"), "hello");
+        public void DownloadFile_ReturnsPhysicalFileAsNamedAttachment() {
+            var info = new FileInfo(Path.Combine(BaseDirectory, "docs", "notes.txt"));
+            string? asked = null;
+            _fileSystem.OnGetFileInfo = path => { asked = path; return info; };
 
             var result = _controller.DownloadFile("docs/notes.txt");
 
+            Assert.Equal("docs/notes.txt", asked);
             var file = Assert.IsType<PhysicalFileResult>(result);
-            Assert.Equal(Path.Combine(_baseDirectory, "docs", "notes.txt"), file.FileName);
+            Assert.Equal(info.FullName, file.FileName);
             Assert.Equal("notes.txt", file.FileDownloadName);
             Assert.Equal("text/plain", file.ContentType);
             Assert.True(file.EnableRangeProcessing);
@@ -40,7 +39,7 @@ namespace TestProject.Tests {
 
         [Fact]
         public void DownloadFile_UnknownExtension_FallsBackToOctetStream() {
-            File.WriteAllText(Path.Combine(_baseDirectory, "data.unknownext"), "");
+            _fileSystem.OnGetFileInfo = _ => new FileInfo(Path.Combine(BaseDirectory, "data.unknownext"));
 
             var result = _controller.DownloadFile("data.unknownext");
 
@@ -49,49 +48,60 @@ namespace TestProject.Tests {
 
         [Fact]
         public void DownloadFile_MissingFile_ReturnsNotFound() {
+            _fileSystem.OnGetFileInfo = _ => throw new FileNotFoundException();
+
             var result = _controller.DownloadFile("nope.txt");
 
             Assert.IsType<NotFoundResult>(result);
         }
 
         [Fact]
-        public void DownloadFile_Directory_ReturnsNotFound() {
-            Directory.CreateDirectory(Path.Combine(_baseDirectory, "docs"));
-
-            var result = _controller.DownloadFile("docs");
-
-            Assert.IsType<NotFoundResult>(result);
-        }
-
-        [Fact]
         public void DownloadFile_PathEscapingBase_ReturnsBadRequest() {
+            _fileSystem.OnGetFileInfo = _ => throw new ArgumentException("escapes");
+
             var result = _controller.DownloadFile("../secret.txt");
 
             Assert.IsType<BadRequestResult>(result);
         }
 
         [Fact]
-        public async Task UploadFile_NewFile_WritesItAndReturnsCreatedEntry() {
-            Directory.CreateDirectory(Path.Combine(_baseDirectory, "docs"));
+        public void DownloadFile_OtherFailure_Propagates() {
+            _fileSystem.OnGetFileInfo = _ => throw new IOException("disk on fire");
+
+            Assert.Throws<IOException>(() => _controller.DownloadFile("notes.txt"));
+        }
+
+        [Fact]
+        public async Task UploadFile_WritesTheFileIntoThePathUnderItsOwnName_ReturnsCreatedEntry() {
+            var entry = new FileSystemEntry("docs/notes.txt", IsDirectory: false, Size: 5);
+            (string directory, string name, string content)? written = null;
+            _fileSystem.OnWriteFile = (directory, name, content) => {
+                written = (directory, name, new StreamReader(content).ReadToEnd());
+                return entry;
+            };
 
             var result = await _controller.UploadFile(Upload("notes.txt", "hello"), "docs");
 
+            Assert.Equal(("docs", "notes.txt", "hello"), written);
             var created = Assert.IsType<CreatedResult>(result.Result);
-            Assert.Equal(new FileSystemEntry("docs/notes.txt", IsDirectory: false, Size: 5), created.Value);
-            Assert.Equal("/api/file?path=" + Uri.EscapeDataString("docs/notes.txt"), created.Location);
-            Assert.Equal("hello", File.ReadAllText(Path.Combine(_baseDirectory, "docs", "notes.txt")));
+            Assert.Same(entry, created.Value);
+            Assert.Equal("/api/file?path=docs%2Fnotes.txt", created.Location);
         }
 
         [Fact]
         public async Task UploadFile_NoPath_WritesIntoBase() {
-            var result = await _controller.UploadFile(Upload("notes.txt", "hello"));
+            string? directory = null;
+            _fileSystem.OnWriteFile = (dir, name, _) => { directory = dir; return new FileSystemEntry(name, false, 5); };
 
-            Assert.IsType<CreatedResult>(result.Result);
-            Assert.Equal("hello", File.ReadAllText(Path.Combine(_baseDirectory, "notes.txt")));
+            await _controller.UploadFile(Upload("notes.txt", "hello"));
+
+            Assert.Equal("", directory);
         }
 
         [Fact]
         public async Task UploadFile_MissingDirectory_ReturnsNotFound() {
+            _fileSystem.OnWriteFile = (_, _, _) => throw new DirectoryNotFoundException();
+
             var result = await _controller.UploadFile(Upload("notes.txt", "hello"), "nope");
 
             Assert.IsType<NotFoundResult>(result.Result);
@@ -99,26 +109,27 @@ namespace TestProject.Tests {
 
         [Fact]
         public async Task UploadFile_ExistingEntry_ReturnsConflict() {
-            File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "original");
+            _fileSystem.OnWriteFile = (_, _, _) => throw new EntryExistsException("taken");
 
             var result = await _controller.UploadFile(Upload("notes.txt", "replacement"));
 
             Assert.IsType<ConflictResult>(result.Result);
-            Assert.Equal("original", File.ReadAllText(Path.Combine(_baseDirectory, "notes.txt")));
         }
 
         [Fact]
-        public async Task UploadFile_PathEscapingBase_ReturnsBadRequest() {
-            var result = await _controller.UploadFile(Upload("notes.txt", "hello"), "../");
+        public async Task UploadFile_EscapingPathOrBadName_ReturnsBadRequest() {
+            _fileSystem.OnWriteFile = (_, _, _) => throw new ArgumentException("not a plain name");
 
-            Assert.IsType<BadRequestResult>(result.Result);
-        }
-
-        [Fact]
-        public async Task UploadFile_FileNameWithSeparator_ReturnsBadRequest() {
             var result = await _controller.UploadFile(Upload("../notes.txt", "hello"));
 
             Assert.IsType<BadRequestResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task UploadFile_OtherFailure_Propagates() {
+            _fileSystem.OnWriteFile = (_, _, _) => throw new IOException("disk on fire");
+
+            await Assert.ThrowsAsync<IOException>(() => _controller.UploadFile(Upload("notes.txt", "hello")));
         }
 
         /// <summary>An in-memory stand-in for the <c>file</c> part of a multipart upload.</summary>

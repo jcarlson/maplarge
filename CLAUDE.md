@@ -177,20 +177,26 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   only place a `FileSystemInfo` is read). Paths are base-relative and use `/` on every platform (decision 22); `Size` is bytes for a file, `null` for a
   directory. There is no wrapper model: listings are plain arrays, and counts and totals are the client's
   job (decision 17).
+- `Services/IFileSystemService.cs` — the contract the controllers depend on (`ListDirectory`, `Search`,
+  `GetFileInfo`, `WriteFileAsync`), documenting the outcomes and exceptions of each operation;
+  `FileSystemService` is its one real implementation (decision 24).
 - `Services/FileSystemService.cs` — the operations on the configured base directory (`ListDirectory`,
   `Search`, `GetFileInfo`, `WriteFileAsync`), taking paths relative to the base. `ListDirectory` and
   `Search` return an `IReadOnlyList<FileSystemEntry>` ordered directories first, then files, each group in
   ordinal path order; `Search(path, query)` walks the directory `path` recursively and matches the entry
   name only, returning base-relative paths.
   `WriteFileAsync` creates a new file (never overwrites) and returns its `FileSystemEntry`. Constructed in
-  `Program.cs` from `FileBrowser:BaseDirectory` and registered as a singleton.
+  `Program.cs` from `FileBrowser:BaseDirectory` and registered as the singleton `IFileSystemService`.
 - `Services/EntryExistsException.cs` — thrown by the service when a create would clash with an existing
   file or directory; the controller maps it to 409.
 - `Services/PathResolver.cs` — maps client-supplied relative paths to absolute paths inside the base;
   normalises the path and rejects anything that escapes the base. Pure string logic, no filesystem access.
 - `TestProject.Tests/` — xUnit test project, excluded from the web project's default source globs via
   `DefaultItemExcludes` in `TestProject.csproj`. Its `js/` folder holds the Node tests for `wwwroot/js`,
-  kept here rather than under `wwwroot` so they are never served as static files.
+  kept here rather than under `wwwroot` so they are never served as static files. The controller tests
+  script a `StubFileSystemService` (one settable delegate per operation) so each mapping of a service
+  outcome to a status code is tested without a directory on disk; the service tests use real temp
+  directories.
 - `appsettings.json` — the single config file. `FileBrowser:BaseDirectory` is the browsable root (relative
   values resolve against the content root), `public` by default; override with the
   `FileBrowser__BaseDirectory` environment variable.

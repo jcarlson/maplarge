@@ -6,14 +6,14 @@ namespace TestProject.Controllers {
     /// <summary>
     /// JSON API for searching the configured base directory by name. Like
     /// <see cref="DirectoryController"/>, it only translates HTTP to and from
-    /// <see cref="FileSystemService"/>; the matching and traversal live there.
+    /// <see cref="IFileSystemService"/>; the matching and traversal live there.
     /// </summary>
     [ApiController]
     [Route("api/search")]
     public class SearchController : ControllerBase {
-        private readonly FileSystemService _fileSystem;
+        private readonly IFileSystemService _fileSystem;
 
-        public SearchController(FileSystemService fileSystem) {
+        public SearchController(IFileSystemService fileSystem) {
             _fileSystem = fileSystem;
         }
 

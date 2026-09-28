@@ -7,7 +7,7 @@ namespace TestProject.Controllers {
     /// <summary>
     /// Serves and accepts individual files in the configured base directory. Like
     /// <see cref="DirectoryController"/>, it only maps HTTP to and from
-    /// <see cref="FileSystemService"/>; path resolution and existence checks live there.
+    /// <see cref="IFileSystemService"/>; path resolution and existence checks live there.
     /// </summary>
     [ApiController]
     [Route("api/file")]
@@ -15,9 +15,9 @@ namespace TestProject.Controllers {
         private const string FallbackContentType = "application/octet-stream";
         private static readonly FileExtensionContentTypeProvider ContentTypes = new();
 
-        private readonly FileSystemService _fileSystem;
+        private readonly IFileSystemService _fileSystem;
 
-        public FileController(FileSystemService fileSystem) {
+        public FileController(IFileSystemService fileSystem) {
             _fileSystem = fileSystem;
         }
 

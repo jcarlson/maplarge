@@ -5,14 +5,14 @@ using TestProject.Services;
 namespace TestProject.Controllers {
     /// <summary>
     /// JSON API for browsing the configured base directory. The controller only translates
-    /// HTTP to and from <see cref="FileSystemService"/>; all path and listing logic lives there.
+    /// HTTP to and from <see cref="IFileSystemService"/>; all path and listing logic lives there.
     /// </summary>
     [ApiController]
     [Route("api/dir")]
     public class DirectoryController : ControllerBase {
-        private readonly FileSystemService _fileSystem;
+        private readonly IFileSystemService _fileSystem;
 
-        public DirectoryController(FileSystemService fileSystem) {
+        public DirectoryController(IFileSystemService fileSystem) {
             _fileSystem = fileSystem;
         }
 

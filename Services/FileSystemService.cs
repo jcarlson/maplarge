@@ -2,10 +2,10 @@ using TestProject.Models;
 
 namespace TestProject.Services {
     /// <summary>
-    /// Operations on the files and directories under a fixed base directory. Every path taken
-    /// or returned is relative to that base, so callers never see where on disk the base lives.
+    /// The <see cref="IFileSystemService"/> over a real directory on disk. Every path taken or
+    /// returned is relative to the base given to the constructor.
     /// </summary>
-    public class FileSystemService {
+    public class FileSystemService : IFileSystemService {
         private readonly PathResolver _paths;
 
         public FileSystemService(string baseDirectory) {
@@ -15,34 +15,13 @@ namespace TestProject.Services {
             }
         }
 
-        /// <summary>
-        /// Lists the files and directories directly inside <paramref name="path"/>, a directory
-        /// given relative to the base. An empty path or "/" lists the base itself.
-        /// </summary>
-        /// <exception cref="ArgumentException">The path would escape the base directory.</exception>
-        /// <exception cref="DirectoryNotFoundException">
-        /// The directory does not exist under the base. A file at the path counts as no directory.
-        /// </exception>
+        /// <inheritdoc/>
         public IReadOnlyList<FileSystemEntry> ListDirectory(string path = "") {
             var directory = ResolveDirectory(path);
             return ToOrderedEntries(directory.EnumerateFileSystemInfos());
         }
 
-        /// <summary>
-        /// Finds every file and directory anywhere under <paramref name="path"/>, a directory given
-        /// relative to the base (empty or "/" for the base itself), whose name contains
-        /// <paramref name="query"/>, ignoring case. Only the entry's own name is matched, never
-        /// the directories above it, so a query of "photos" finds the "photos" directory but not
-        /// the files inside it. Paths in the result are relative to the base, not to
-        /// <paramref name="path"/>. Subdirectories that cannot be read are skipped rather than
-        /// failing the whole search.
-        /// </summary>
-        /// <exception cref="ArgumentException">
-        /// The path would escape the base directory, or the query is empty or whitespace.
-        /// </exception>
-        /// <exception cref="DirectoryNotFoundException">
-        /// The directory does not exist under the base. A file at the path counts as no directory.
-        /// </exception>
+        /// <inheritdoc/>
         public IReadOnlyList<FileSystemEntry> Search(string path, string query) {
             if (string.IsNullOrWhiteSpace(query)) {
                 throw new ArgumentException("Search query must not be empty.", nameof(query));
@@ -51,6 +30,7 @@ namespace TestProject.Services {
 
             var options = new EnumerationOptions {
                 RecurseSubdirectories = true,
+                // A subdirectory that cannot be read is skipped rather than failing the whole search.
                 IgnoreInaccessible = true,
                 // Show the same entries a listing would: the defaults skip hidden and system files.
                 AttributesToSkip = 0,
@@ -89,15 +69,7 @@ namespace TestProject.Services {
                 .ThenBy(entry => entry.Path, StringComparer.Ordinal)
                 .ToList();
 
-        /// <summary>
-        /// Describes the file at <paramref name="path"/>, given relative to the base. No handle is
-        /// opened; the caller decides how to read the file, e.g. by handing
-        /// <see cref="FileInfo.FullName"/> to the framework so it owns the open and close.
-        /// </summary>
-        /// <exception cref="ArgumentException">The path would escape the base directory.</exception>
-        /// <exception cref="FileNotFoundException">
-        /// No file exists at the path under the base. A directory at the path counts as no file.
-        /// </exception>
+        /// <inheritdoc/>
         public FileInfo GetFileInfo(string path) {
             var file = new FileInfo(_paths.Resolve(path));
             if (!file.Exists) {
@@ -107,18 +79,7 @@ namespace TestProject.Services {
             return file;
         }
 
-        /// <summary>
-        /// Writes <paramref name="content"/> to a new file named <paramref name="fileName"/> inside
-        /// <paramref name="directoryPath"/>, a directory given relative to the base. The file must not
-        /// already exist; nothing is ever overwritten. If the copy fails or is cancelled part way, the
-        /// partial file is deleted before the exception propagates, so a failed upload leaves no trace.
-        /// </summary>
-        /// <returns>The new file as the <see cref="FileSystemEntry"/> a listing of its directory would show.</returns>
-        /// <exception cref="ArgumentException">
-        /// The directory path would escape the base, or the file name is empty or not a single path segment.
-        /// </exception>
-        /// <exception cref="DirectoryNotFoundException">The directory does not exist under the base.</exception>
-        /// <exception cref="EntryExistsException">A file or directory with that name already exists there.</exception>
+        /// <inheritdoc/>
         public async Task<FileSystemEntry> WriteFileAsync(string directoryPath, string fileName, Stream content, CancellationToken cancellationToken = default) {
             var directory = ResolveDirectory(directoryPath);
 
