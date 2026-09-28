@@ -20,6 +20,28 @@ design choice and its reasoning as it was made, and the Git history shows the or
 in. I am happy to walk through any class, any decision, or any commit and explain why it is the way it
 is.
 
+**Large directories are not paged.** `GET /api/dir` returns every entry in the directory, and the
+client renders every row. I chose not to deal with directories holding excessive numbers of entries;
+it was a trade-off to keep the scope of the project limited. The solution would be to paginate the
+listing endpoint (and search, which has the same shape) and then choose on the client between
+pagination controls and rendering each page incrementally as it arrives, appending rows with
+`element.append` rather than replacing the table with `replaceChildren`. Rendering very large lists
+efficiently is also one of the problems libraries like React exist to solve, and which the
+vanilla-JavaScript constraint puts on the application instead.
+
+**Directory reads are synchronous, and there is no logging.** `ListDirectory` and `Search` run on the
+request thread. There is no evidence that at this project's scale synchronous I/O is a performance
+problem. `DirectoryInfo.EnumerateFileSystemInfos` has no native asynchronous version, so the most
+`FileSystemService` could do is wrap the call in a task and await it, and since enumerating the file
+system is all that call does, that would be unlikely to improve throughput; the framework's directory
+enumeration is already heavily optimised. Downloads and uploads, where the I/O is substantial, do
+stream asynchronously. I also did not add logging: the project is not going to be deployed anywhere,
+and for troubleshooting at this size a step debugger is more useful than a million log statements.
+
+**Error responses are bare status codes.** A 400, 404 or 409 has no body. Additional information in
+the responses would not have materially changed the rudimentary UI that was built, which turns each
+status into its own message on the client. Error handling was kept basic on purpose to limit scope.
+
 ## Running it
 
 You need the .NET 8 SDK or newer. Nothing else is required to build or run.

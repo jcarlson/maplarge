@@ -426,3 +426,15 @@ built their expected paths with `Path.Combine`, which hides the separator; they 
 the same expectation holds on every platform. The separator is normalised on the server rather than
 tolerated on the client because the path is part of the API's contract, and one representation on the
 wire is simpler than two.
+
+## 23. Listings and search results are not paged
+
+**Decision:** `GET /api/dir` and `GET /api/search` return every entry in one array, and the client
+renders every row. There is no page size, cursor or result cap.
+
+**Why:** A scope cut. Paging is the right answer for a directory or a search with tens of thousands of
+entries, and the shape is clear: a page size and cursor on both endpoints (ordering is already
+deterministic, so a cursor is a path), and on the client either pagination controls or incremental
+rendering that appends each page's rows instead of replacing the table. It was left out to keep the
+project to the exercise's size; the README's notes to the reviewer say the same, so the omission is
+visible rather than discovered.
