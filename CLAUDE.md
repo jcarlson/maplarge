@@ -199,7 +199,7 @@ for one file. Node 22+ is needed only for these tests, never to build or run the
   `.gitignore` ignores everything under it except the seed files (each subdirectory has to be
   un-ignored before a file inside it can be).
 - `Properties/launchSettings.json` — one `TestProject` profile, HTTP only, opening the browser at `/`.
-- `README.md` — the reviewer-facing guide: how to run and test, the `public/` sample directory and how
+- `README.md` — the reviewer-facing guide: notes to the reviewer (how the code was produced and why), how to run and test, the `public/` sample directory and how
   to point the app elsewhere, how to use the UI, the API table, and where to look in the code. Keep it
   in step with behaviour changes.
 - `DECISIONS.md` — numbered log of architecture decisions with rationale. **Append an entry whenever a

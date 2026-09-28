@@ -4,6 +4,22 @@ A file and directory browser for a configurable server-side folder: an ASP.NET C
 single-page app written in plain JavaScript, with no UI framework and no build step. You can browse,
 search, download and upload, and every view is a deep link.
 
+## Notes to the reviewer
+
+A few things worth knowing before you read the code.
+
+**I wrote none of this code by hand, by design.** Every line of C#, JavaScript, CSS and prose in this
+repository was produced with Claude Code, and every commit says so in its trailer. I chose to work this
+way because I think that is where software engineering is going, and because I read this exercise as a
+test of how I think about and structure an application rather than how well I know a particular
+syntax. What I did by hand was the engineering: deciding what to build in each step, what shape the
+API and the client should take, when an abstraction was warranted and when it was not, what to test and
+how, and what to reject. `CLAUDE.md` holds the working rules I set (one deliberate step at a time, tests
+in every commit, a decision log, no feature built ahead of being asked), `DECISIONS.md` records each
+design choice and its reasoning as it was made, and the Git history shows the order the work happened
+in. I am happy to walk through any class, any decision, or any commit and explain why it is the way it
+is.
+
 ## Running it
 
 You need the .NET 8 SDK or newer. Nothing else is required to build or run.
