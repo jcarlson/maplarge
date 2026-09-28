@@ -61,6 +61,14 @@ namespace TestProject.Tests {
         }
 
         [Fact]
+        public void ListDirectory_PathIsAFile_ThrowsDirectoryNotFound() {
+            File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "");
+            var service = new FileSystemService(_baseDirectory);
+
+            Assert.Throws<DirectoryNotFoundException>(() => service.ListDirectory("notes.txt"));
+        }
+
+        [Fact]
         public void ListDirectory_PathEscapingBase_Throws() {
             var service = new FileSystemService(_baseDirectory);
 
@@ -171,6 +179,14 @@ namespace TestProject.Tests {
             var service = new FileSystemService(_baseDirectory);
 
             Assert.Throws<DirectoryNotFoundException>(() => service.Search("nope", "cat"));
+        }
+
+        [Fact]
+        public void Search_PathIsAFile_ThrowsDirectoryNotFound() {
+            File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "");
+            var service = new FileSystemService(_baseDirectory);
+
+            Assert.Throws<DirectoryNotFoundException>(() => service.Search("notes.txt", "cat"));
         }
 
         [Fact]

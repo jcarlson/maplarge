@@ -84,6 +84,15 @@ namespace TestProject.Tests {
         }
 
         [Fact]
+        public void Search_PathIsAFile_ReturnsNotFound() {
+            File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "");
+
+            var result = _controller.Search("cat", "notes.txt");
+
+            Assert.IsType<NotFoundResult>(result.Result);
+        }
+
+        [Fact]
         public void Search_PathEscapingBase_ReturnsBadRequest() {
             var result = _controller.Search("cat", "../");
 

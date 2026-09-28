@@ -60,6 +60,15 @@ namespace TestProject.Tests {
         }
 
         [Fact]
+        public void List_PathIsAFile_ReturnsNotFound() {
+            File.WriteAllText(Path.Combine(_baseDirectory, "notes.txt"), "");
+
+            var result = _controller.List("notes.txt");
+
+            Assert.IsType<NotFoundResult>(result.Result);
+        }
+
+        [Fact]
         public void List_MissingDirectory_ReturnsNotFound() {
             var result = _controller.List("nope");
 

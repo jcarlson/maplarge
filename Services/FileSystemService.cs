@@ -20,9 +20,11 @@ namespace TestProject.Services {
         /// given relative to the base. An empty path or "/" lists the base itself.
         /// </summary>
         /// <exception cref="ArgumentException">The path would escape the base directory.</exception>
-        /// <exception cref="DirectoryNotFoundException">The directory does not exist under the base.</exception>
+        /// <exception cref="DirectoryNotFoundException">
+        /// The directory does not exist under the base. A file at the path counts as no directory.
+        /// </exception>
         public IReadOnlyList<FileSystemEntry> ListDirectory(string path = "") {
-            var directory = new DirectoryInfo(_paths.Resolve(path));
+            var directory = ResolveDirectory(path);
             return ToOrderedEntries(directory.EnumerateFileSystemInfos());
         }
 
@@ -38,12 +40,14 @@ namespace TestProject.Services {
         /// <exception cref="ArgumentException">
         /// The path would escape the base directory, or the query is empty or whitespace.
         /// </exception>
-        /// <exception cref="DirectoryNotFoundException">The directory does not exist under the base.</exception>
+        /// <exception cref="DirectoryNotFoundException">
+        /// The directory does not exist under the base. A file at the path counts as no directory.
+        /// </exception>
         public IReadOnlyList<FileSystemEntry> Search(string path, string query) {
             if (string.IsNullOrWhiteSpace(query)) {
                 throw new ArgumentException("Search query must not be empty.", nameof(query));
             }
-            var directory = new DirectoryInfo(_paths.Resolve(path));
+            var directory = ResolveDirectory(path);
 
             var options = new EnumerationOptions {
                 RecurseSubdirectories = true,
@@ -55,6 +59,23 @@ namespace TestProject.Services {
                 .EnumerateFileSystemInfos("*", options)
                 .Where(info => info.Name.Contains(query, StringComparison.OrdinalIgnoreCase));
             return ToOrderedEntries(matches);
+        }
+
+        /// <summary>
+        /// The existing directory at <paramref name="path"/>, given relative to the base. Checked
+        /// explicitly rather than left to enumeration, whose exception for a path that is a file
+        /// differs by platform (a <see cref="DirectoryNotFoundException"/> on Unix, a plain
+        /// <see cref="IOException"/> on Windows).
+        /// </summary>
+        /// <exception cref="ArgumentException">The path would escape the base directory.</exception>
+        /// <exception cref="DirectoryNotFoundException">There is no directory at the path under the base.</exception>
+        private DirectoryInfo ResolveDirectory(string path) {
+            var directory = new DirectoryInfo(_paths.Resolve(path));
+            if (!directory.Exists) {
+                throw new DirectoryNotFoundException($"Directory does not exist under the base directory: {path}");
+            }
+
+            return directory;
         }
 
         /// <summary>
@@ -98,10 +119,7 @@ namespace TestProject.Services {
         /// <exception cref="DirectoryNotFoundException">The directory does not exist under the base.</exception>
         /// <exception cref="EntryExistsException">A file or directory with that name already exists there.</exception>
         public async Task<FileSystemEntry> WriteFileAsync(string directoryPath, string fileName, Stream content, CancellationToken cancellationToken = default) {
-            var directory = new DirectoryInfo(_paths.Resolve(directoryPath));
-            if (!directory.Exists) {
-                throw new DirectoryNotFoundException($"Directory does not exist under the base directory: {directoryPath}");
-            }
+            var directory = ResolveDirectory(directoryPath);
 
             if (fileName.Length == 0 || fileName is "." or ".." || Path.GetFileName(fileName) != fileName) {
                 throw new ArgumentException($"File name must be a single path segment: {fileName}", nameof(fileName));
