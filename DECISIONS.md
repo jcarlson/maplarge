@@ -27,19 +27,22 @@ while iterating.
 ## 3. Symbolic links and other special files are out of scope
 
 **Decision:** Only regular files and directories are modeled. Symbolic links, devices, sockets and pipes
-are excluded, and will be omitted from listings rather than reported or followed.
+are not modelled or detected: a listing reports whatever the operating system reports for the entry,
+and a link is neither marked as one nor filtered out.
 
-**Why:** Following links would let a link inside the root point anywhere on disk. Reporting them as a
-distinct entry type is a reasonable feature but not needed for the exercise; hiding them is the simplest
-safe behavior and can be revisited if time allows.
+**Why:** Reporting links as a distinct entry type is a reasonable feature but not needed for the
+exercise. The base directory is the operator's own folder, uploads only ever create regular files, and
+nothing in the app creates a link, so a link that points outside the base can only be one the operator
+placed there. Detecting and hiding links was considered and deferred; it belongs with delete, move and
+copy, which are the first operations that would have to decide what a link means.
 
 ## 4. Base directory is a single configuration value, resolved against the content root
 
 **Decision:** The browsable root is read from `FileBrowser:BaseDirectory` in `appsettings.json` (or the
 `FileBrowser__BaseDirectory` environment variable) as a plain string in `Program.cs`, resolved to an absolute
 path against the app's content root, and handed to `FileSystemService` as a constructor argument. There is no
-options class. The checked-in default is `.`, the project directory, so the app runs out of the box; missing
-or non-existent directories fail at startup.
+options class. The checked-in default is `public`, a seeded sample directory in the repository (see the
+README), so the app runs out of the box; a missing or non-existent directory fails at startup.
 
 **Why:** One value does not justify an options class and `IOptions<T>` plumbing. Taking the directory as a
 constructor string keeps `FileSystemService` free of framework types, so tests build it directly against a
@@ -194,7 +197,11 @@ it without re-listing. `IFormFile` was chosen over reading the multipart body by
 upload (to disk above 64 KB) before the action runs, which costs a second write for large files, but the
 hand-rolled `MultipartReader` streaming path is several times the code; it is the obvious change to make
 if upload throughput turns out to matter. With this third endpoint the `ArgumentException` → 400 mapping
-now appears in three actions, which is the threshold decision 9 set for moving it into an exception filter.
+now appears in three actions, the threshold decision 9 set for moving it into an exception filter. On
+reflection it stays in the actions: each action catches a different set (`FileNotFoundException` for a
+download, `DirectoryNotFoundException` for a listing, `EntryExistsException` only here), so a shared
+filter would either map exceptions an action never expects or grow per-action rules, and four short
+catch blocks next to the documentation of what each status means are easier to read than either.
 
 ## 13. Search is a recursive, case-insensitive name match served as a `Listing` from `/api/search`
 
